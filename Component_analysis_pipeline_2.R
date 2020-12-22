@@ -256,13 +256,13 @@ PCAloadings <- data.frame(Variables = rownames(wine.pca$rotation), wine.pca$rota
 new_PCAloadings <- full_join(PCAloadings, LC_OCD_rot)
 
 ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  #geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x), shape=21, size=5, colour="black")+
-  #scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
+  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x), shape=21, size=5, colour="black")+
+  scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
   geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1*15), yend = (PC2*15)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
   annotate("text", x = (LC_OCD_rot$PC1*15), y = (LC_OCD_rot$PC2*15), label = LC_OCD_rot$Variables, size=5)+
-  #geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1*15), yend = (PC2*15)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  #annotate("text", x = (PCA_rot$PC1*15), y = (PCA_rot$PC2*15),label = PCA_rot$Variables)+
-  theme_classic()+
+  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1*15), yend = (PC2*15)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
+  annotate("text", x = (PCA_rot$PC1*15), y = (PCA_rot$PC2*15),label = PCA_rot$Variables, size=5)+
+  theme_classic()+ xlim(-15,10) + ylim(-10, 15)+
   guides(fill="legend")+
   theme(legend.position = c(-1,0))+
   labs(color="Sites", x="PC 1 (32%)", y="PC 2 (20%)", title="PCA of PARAFAC Components and Other Optical Parameters")
@@ -330,9 +330,9 @@ data_sum5 <- data_sum4 %>%
 
 data_sum5 %>%
   ggplot() +
-  geom_boxplot(aes(x=var_PC2, y=groups, fill=groups)) + coord_flip() +
+  geom_boxplot(aes(x=meanPC2, y=groups, fill=groups)) + coord_flip() +
   scale_fill_manual(values=c("#942D0A", "#E65525" , "#043005","#4F9608")) +
-  ggtitle("PC2 variance")
+  ggtitle("PC2 mean")
 
 #### Hydrological Indices Analysis ####
 magnitude_ind <- read_csv("Hydra_Hydro_Ind_subs_group1.csv") %>% 
@@ -424,6 +424,7 @@ step(simple_mod_temp, scope=~.+PC1+PC2+PC3+PC4, direction="both")
 extractAIC(simple_mod_temp)
 plot(simple_mod_med)
 
+
 #### PLSR trial ####
 library(pls)
 library(plsVarSel)
@@ -436,7 +437,7 @@ data_sum5 <- data_sum5 %>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-model <-  pls(meta_indices, data_sum5[4], ncomp=17,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "Shoesize prediction model")
+model <-  pls(meta_indices, data_sum5[4], ncomp=17,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
 summary(model)
@@ -453,11 +454,12 @@ plotDistDoF(model)
 par(mfrow = c(2, 2))
 plotRegcoeffs(model)
 plotRegcoeffs(model, ncomp = 2)
-plot(model$coeffs, ncomp = 3, type = "b", show.labels = TRUE)
+plot(model$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 plot(model$coeffs, type = "b", show.labels = TRUE)
 
+par(mfrow = c(1, 1))
 plotVIPScores(model)
-plotVIPScores(model, ncomp = 2, type = "h", show.labels = TRUE)
+plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
 
 plotSelectivityRatio(model,  type = "h", show.labels = TRUE)
 plotSelectivityRatio(model, ncomp = 2, type = "h", show.labels = TRUE)
@@ -521,37 +523,4 @@ pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, ce
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 
-ggheatmap_med_alt <- ggplot(melted_indices_medalt, aes(Var2, Var1, fill = value))+ #
-  geom_raster()+
-  scale_fill_gradientn(colors=coul) +
-  theme_minimal()+ # minimal theme
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
-  coord_fixed()+ labs(y="Mediterranean Altered", x=NULL)
-
-ggheatmap_temp_alt <- ggplot(melted_indices_tempalt, aes(Var2, Var1, fill = value))+ #
-  geom_raster()+
-  scale_fill_gradientn(colors=coul2) +
-  theme_minimal()+ # minimal theme
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
-  coord_fixed() + labs(y="Temperate Altered", x=NULL)
-
-ggheatmap_med_nat <- ggplot(melted_indices_mednat, aes(Var2, Var1, fill = value))+ #
-  geom_raster()+
-  scale_fill_gradientn(colors=coul) +
-  theme_minimal()+ # minimal theme
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
-  coord_fixed()+ labs(y="Mediterranean Natural", x=NULL)
-
-ggheatmap_temp_nat <- ggplot(melted_indices_tempnat, aes(Var2, Var1, fill = value))+ #
-  geom_raster()+
-  scale_fill_gradientn(colors=coul2) +
-  theme_minimal()+ # minimal theme
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
-  coord_fixed() + labs(y="Temperate Natural", x=NULL)
-
-grid.arrange(arrangeGrob(ggheatmap_med_alt, ggheatmap_med_nat, ggheatmap_temp_alt, ggheatmap_temp_nat, nrow=4))
 
