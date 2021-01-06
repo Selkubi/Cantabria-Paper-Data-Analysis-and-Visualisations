@@ -124,6 +124,8 @@ BDOC_normalised_components<- data_sum2 %>%
          FIX, FIX2, HIX2, beta.alpha, slope_classic, slope_lm, slope_short_Helms, slope_short_Loiselle,
          SR_Helms, SR_Loiselle, E2.to.E3, E4.to.E6, DecAbsCoeff254, campaign, site, groups.x)
 
+View(data_sum2 %>% group_by(site) %>% summarise(NPOC_mean=mean(NPOC))
+)
 BDOC_normalised_components[is.na(BDOC_normalised_components)] <- 0
 data_sum2[is.na(data_sum2)] <- 0
 
@@ -202,13 +204,14 @@ ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="s
 par(mfrow=c(1,1))
 
 #### Anova with betadisper(vegadist) ####
-betas <- vegdist(wine.pca$x[,1:4],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+betas <- vegdist(wine.pca$x[,2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
 disp <- betas[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
   as_tibble(rownames="site")
 boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
         xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), main="Variance in DOM (quality) over the seasons")
+
 #png('Seasonal quality boxplot of variance across sites')
 #seasonal_variance_boxplot
 #dev.off()
@@ -230,24 +233,48 @@ distance_matrix %>%
   ggplot() +
   geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
   theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid")+
+  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.1. Temperate sites, PC2"), tag="Rsqr=0.116")+
   #scale_fill_manual(values= c("#942D0A", "#E65525"))+
   scale_fill_manual(values= c("#043005","#4F9608"))+
-  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")
+  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
+  theme(plot.tag.position=c(0.65,0.10))
+  
+
+distance_matrix %>% 
+  filter(groups=="MedAlt" | groups=="MedNat") %>%
+  ggplot() +
+  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
+  theme_classic()+ coord_flip()+
+  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.2. Mediterranean sites, PC2"), tag="Rsqr=0.191")+
+  scale_fill_manual(values= c("#942D0A", "#E65525"))+
+  #scale_fill_manual(values= c("#043005","#4F9608"))+
+  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
+  theme(plot.tag.position=c(0.65,0.10))
+
 
 #### LC-OCD data reflection onto the PCA space ####
 PCA_scores <- cbind(pca_data, as_tibble(wine.pca$x)) %>% 
   select(site, campaign, starts_with("PC"))
 LC_OCD_cor <- data_sum %>% select("site", "campaign","BDOC","CDOC","HMWS_C", 
                                   "humic_like_substance_C", "LMWS_C", "HMWS_N", "HS", "SUVA_HS", "SUVA_ges") %>%
-  mutate(percent_HMWS_C=HMWS_C*100/BDOC,
-         percent_humic_like_substance_C=humic_like_substance_C*100/BDOC,
-         percent_LMWS_C=LMWS_C*100/BDOC,
-         C_to_N_ratio_HMWS=HMWS_C/HMWS_N, 
-         C_to_N_ratio_humic=humic_like_substance_C/HS
+  mutate("% HMWS C"=HMWS_C*100/BDOC,
+         "% HS_C"=humic_like_substance_C*100/BDOC,
+         "% LMWS_C"=LMWS_C*100/BDOC,
+         "HMWS (C:N)"=HMWS_C/HMWS_N, 
+         "humic (C:N)"=humic_like_substance_C/HS
          )
 
-LC_OCD_rot <- cor(PCA_scores[c("PC1", "PC2")], LC_OCD_cor[,-c(1:10)], method = "pearson", use="complete.obs") %>% 
+write_delim(x=(LC_OCD_cor %>% group_by(site) %>% summarise(
+  HMWS_C=mean(HMWS_C, na.rm = T), 
+  humic_like_substance_C=mean(humic_like_substance_C, na.rm=T), 
+  LMWS_C= mean(LMWS_C, na.rm=T), 
+  HMWS_N= mean(HMWS_N, na.rm=T), 
+  HS=mean(HS, na.rm=T), 
+  SUVA_HS= mean(SUVA_HS, na.rm=T), 
+  SUVA_ges=mean(SUVA_ges, na.rm=T))), file="LC_OCD_Sum", delim=";"
+)
+
+LC_OCD_rot <- cor(PCA_scores[c("PC1", "PC2")], LC_OCD_cor[,-c(1:9)], method = "pearson", use="complete.obs") %>% 
   t() %>% as_tibble(rownames = "Variables")
 PCA_rot <- cor(PCA_scores[c("PC1", "PC2")], pca_data[,-(9:10)], method = "pearson", use="complete.obs") %>% 
   t() %>% as_tibble(rownames = "Variables")
@@ -255,18 +282,74 @@ PCA_rot <- cor(PCA_scores[c("PC1", "PC2")], pca_data[,-(9:10)], method = "pearso
 PCAloadings <- data.frame(Variables = rownames(wine.pca$rotation), wine.pca$rotation) %>% as_tibble
 new_PCAloadings <- full_join(PCAloadings, LC_OCD_rot)
 
-ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x), shape=21, size=5, colour="black")+
+
+theme_pca <- function (base_size = 12, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) %+replace% 
+    theme(
+      panel.grid = element_blank()
+    )   
+}
+
+### PCA plots #### 
+
+# title="PCA of PARAFAC Components and Other Optical Parameters"
+plot_all <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2.5, colour="black")+
+  scale_shape_manual(values=c(23,22,25,24))+
   scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
-  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1*15), yend = (PC2*15)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  annotate("text", x = (LC_OCD_rot$PC1*15), y = (LC_OCD_rot$PC2*15), label = LC_OCD_rot$Variables, size=5)+
-  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1*15), yend = (PC2*15)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  annotate("text", x = (PCA_rot$PC1*15), y = (PCA_rot$PC2*15),label = PCA_rot$Variables, size=5)+
-  theme_classic()+ xlim(-15,10) + ylim(-10, 15)+
+  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1*8), yend = (PC2*8)), arrow = arrow(length = unit(1/2, "picas")),color = "blue") +
+  annotate("text", x = (LC_OCD_rot$PC1*8), y = (LC_OCD_rot$PC2*8), label = LC_OCD_rot$Variables, size=4, color="blue")+
+  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1*8), yend = (PC2*8)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
+  annotate("text", x = (PCA_rot$PC1*8), y = (PCA_rot$PC2*8),label = PCA_rot$Variables, size=4, color="black")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "a. Loadings and sites")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.24,0.97))+
+  scale_x_continuous(limits=c(-8,8), n.breaks=10)+
+  scale_y_continuous(limits=c(-8,8), n.breaks=10)+
   guides(fill="legend")+
   theme(legend.position = c(-1,0))+
-  labs(color="Sites", x="PC 1 (32%)", y="PC 2 (20%)", title="PCA of PARAFAC Components and Other Optical Parameters")
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
 
+
+plot_points <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2.5, colour="black")+
+  scale_shape_manual(values=c(23,22,25,24))+
+  scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "b. Sites")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.15,0.97))+
+  scale_x_continuous(limits=c(-8,8), n.breaks=10)+
+  scale_y_continuous(limits=c(-8,8), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
+
+plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/3, "picas")),color = "black") +
+  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2+0.05),label = PCA_rot$Variables, size=3.5, color="black")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "c. Optical parameters")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.24,0.97))+
+  scale_x_continuous(limits=c(-1,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1,1), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
+
+plot_LCOCD <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue") +
+  annotate("text", x = (LC_OCD_rot$PC1), y = (LC_OCD_rot$PC2-0.03), label = LC_OCD_rot$Variables, size=4, color="blue")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.28,0.97))+
+  scale_x_continuous(limits=c(-1,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1,1), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
+
+
+#### end ####
 # Treating the Lc-OCD data as new data and do a PCA on that so that later on you can do a procrustes anaylsis
 # For this you can use the dataset without reduced information Choose the bottom option above in line 100
 
@@ -376,6 +459,7 @@ ordered_flow_scores <- flow_indice_scores %>%arrange(site) %>%
   left_join(data_sum5[c("var_PC1", "site")], by="site") %>%
   select(-site) %>% #we exclude PC19 bcs it is perfectly alined with something
   mutate_if(is.character, as.numeric)
+
 #### Akaike ####
 mlr <- lm(var_PC1~., data=ordered_flow_scores)
 car::vif(mlr)
@@ -523,4 +607,37 @@ pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, ce
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 
+
+#### Separate PC variation barplots ####
+#### Anova with betadisper(vegadist) ####
+betas <- vegdist(wine.pca$x[,1],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+  betadisper(group = BDOC_normalised_components$site) 
+disp <- betas[["distances"]] %>%
+  tapply(BDOC_normalised_components$site, mean) %>%
+  as_tibble(rownames="site")
+boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
+        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), main="Variance in DOM (quality) over the seasons")
+
+unique_data<-site_info[,c("site", "groups")]
+disp<-left_join(disp, as_tibble(unique_data), by=c("site"="site"))
+
+disp_med<-disp[str_sub(disp$groups, 1,3) == "Med",]
+disp_temp<-disp[str_sub(disp$groups, 1,3) =="Tem",]
+
+anova(lm(disp_med[["value"]]~factor(disp_med$groups)))
+anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
+
+distance_matrix <- tibble(distances=betas[["distances"]], site=betas[["group"]])
+distance_matrix <- left_join(distance_matrix, unique_data, by="site")
+distance_matrix %>% 
+  filter(groups=="TempAlt" | groups=="TempNat") %>%
+  ggplot() + 
+  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
+  theme_classic()+ coord_flip()+
+  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid")+
+  #scale_fill_manual(values= c("#942D0A", "#E65525"))+
+  scale_fill_manual(values= c("#043005","#4F9608"))+
+  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
+  scale_x_discrete(expand = c(0,2))+
+  geom_segment(aes(x = 0,  xend = 0,y=3, yend=6), arrow = arrow(length = unit(0.5, "cm")))
 
