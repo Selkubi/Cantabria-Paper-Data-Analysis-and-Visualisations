@@ -124,6 +124,8 @@ BDOC_normalised_components<- data_sum2 %>%
          FIX, FIX2, HIX2, beta.alpha, slope_classic, slope_lm, slope_short_Helms, slope_short_Loiselle,
          SR_Helms, SR_Loiselle, E2.to.E3, E4.to.E6, DecAbsCoeff254, campaign, site, groups.x)
 
+View(data_sum2 %>% group_by(site) %>% summarise(NPOC_mean=mean(NPOC))
+)
 BDOC_normalised_components[is.na(BDOC_normalised_components)] <- 0
 data_sum2[is.na(data_sum2)] <- 0
 
@@ -255,14 +257,24 @@ PCA_scores <- cbind(pca_data, as_tibble(wine.pca$x)) %>%
   select(site, campaign, starts_with("PC"))
 LC_OCD_cor <- data_sum %>% select("site", "campaign","BDOC","CDOC","HMWS_C", 
                                   "humic_like_substance_C", "LMWS_C", "HMWS_N", "HS", "SUVA_HS", "SUVA_ges") %>%
-  mutate(percent_HMWS_C=HMWS_C*100/BDOC,
-         percent_humic_like_substance_C=humic_like_substance_C*100/BDOC,
-         percent_LMWS_C=LMWS_C*100/BDOC,
-         C_to_N_ratio_HMWS=HMWS_C/HMWS_N, 
-         C_to_N_ratio_humic=humic_like_substance_C/HS
+  mutate("% HMWS C"=HMWS_C*100/BDOC,
+         "% HS_C"=humic_like_substance_C*100/BDOC,
+         "% LMWS_C"=LMWS_C*100/BDOC,
+         "HMWS (C:N)"=HMWS_C/HMWS_N, 
+         "humic (C:N)"=humic_like_substance_C/HS
          )
 
-LC_OCD_rot <- cor(PCA_scores[c("PC1", "PC2")], LC_OCD_cor[,-c(1:10)], method = "pearson", use="complete.obs") %>% 
+write_delim(x=(LC_OCD_cor %>% group_by(site) %>% summarise(
+  HMWS_C=mean(HMWS_C, na.rm = T), 
+  humic_like_substance_C=mean(humic_like_substance_C, na.rm=T), 
+  LMWS_C= mean(LMWS_C, na.rm=T), 
+  HMWS_N= mean(HMWS_N, na.rm=T), 
+  HS=mean(HS, na.rm=T), 
+  SUVA_HS= mean(SUVA_HS, na.rm=T), 
+  SUVA_ges=mean(SUVA_ges, na.rm=T))), file="LC_OCD_Sum", delim=";"
+)
+
+LC_OCD_rot <- cor(PCA_scores[c("PC1", "PC2")], LC_OCD_cor[,-c(1:9)], method = "pearson", use="complete.obs") %>% 
   t() %>% as_tibble(rownames = "Variables")
 PCA_rot <- cor(PCA_scores[c("PC1", "PC2")], pca_data[,-(9:10)], method = "pearson", use="complete.obs") %>% 
   t() %>% as_tibble(rownames = "Variables")
@@ -327,7 +339,7 @@ plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 plot_LCOCD <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue") +
   annotate("text", x = (LC_OCD_rot$PC1), y = (LC_OCD_rot$PC2), label = LC_OCD_rot$Variables, size=4, color="blue")+
-  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
+    labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
   theme_pca()+ 
   theme(plot.tag.position=c(0.28,0.97))+
   scale_x_continuous(limits=c(-1,1), n.breaks=10)+
