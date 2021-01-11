@@ -204,7 +204,7 @@ ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="s
 par(mfrow=c(1,1))
 
 #### Anova with betadisper(vegadist) ####
-betas <- vegdist(wine.pca$x[,2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+betas <- vegdist(wine.pca$x[,1:2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
 disp <- betas[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
@@ -521,7 +521,7 @@ data_sum5 <- data_sum5 %>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-model <-  pls(meta_indices, data_sum5[4], ncomp=17,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
+model <-  pls(meta_indices, data_sum5[4], ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
 summary(model)
@@ -542,11 +542,47 @@ plot(model$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 plot(model$coeffs, type = "b", show.labels = TRUE)
 
 par(mfrow = c(1, 1))
-plotVIPScores(model)
+plotVIPScores(model, show.labels=T)
 plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
+vip <-  vipscores(model, ncomp = 1)
+m3 = pls(meta_indices, data_sum5[4], 1, scale = T, cv = 1, exclcols = (vip < 0.5))
 
 plotSelectivityRatio(model,  type = "h", show.labels = TRUE)
 plotSelectivityRatio(model, ncomp = 2, type = "h", show.labels = TRUE)
+
+c = categorize(model, newm$res$cal)
+print(c) # No outliers so we keep all the sites
+
+#This is chosen. Ncomp=1. Now we select the variables with VIP scores higher than 1 as the important ones to be plotted in the 
+#Either select by looking at the VIP scores, or you can do a Regression coefficient analysis using jack.knifing technique (Mehmood et al. 2020) This is harsher in selecting but can be useful
+model <-  selectCompNum(model, 1)
+plotRegcoeffs(model, type = "h", show.ci = TRUE, show.labels = TRUE)
+VIPscores <- plotVIPScores(model, ncomp =1, type = "h", show.labels = TRUE)
+summary(model$coeffs, ncomp = 1)
+
+exclcols <-  model$coeffs$p.values[, 1, 1] > 0.15
+show(exclcols)
+
+newm <-  pls(meta_indices, data_sum5[4], 1, scale = TRUE, cv = 1, exclcols = exclcols)
+summary(newm)
+plot(newm$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
+plotVIPScores(newm, ncomp = 1, type = "h", show.labels = TRUE)
+show(getRegcoeffs(newm))
+
+plotXResiduals(newm, ncomp = 1)
+plotXResiduals(newm$res$cal)
+
+#### End of RC perdictor selecting method ####
+
+# WE move with manual selection of predictors by VIP scores. 
+
+plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
+vip <-  vipscores(model, ncomp = 1)
+model_selected <- pls(meta_indices, data_sum5[4], 1, scale = T, cv = 1, exclcols = (vip < 1))
+plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
+
+
+
 
 #### Heatmap for indices and DOM variance ####
 library(reshape2)
