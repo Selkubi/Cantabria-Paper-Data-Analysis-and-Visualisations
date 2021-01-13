@@ -119,7 +119,7 @@ BDOC_normalised_components<- data_sum2 %>%
          Comp6=Comp6/NPOC,
          Comp7=Comp7/NPOC,
          Comp8=Comp8/NPOC
-         ) %>%
+  ) %>%
   select(starts_with("Comp"),NPOC, SUVA254, 
          FIX, FIX2, HIX2, beta.alpha, slope_classic, slope_lm, slope_short_Helms, slope_short_Loiselle,
          SR_Helms, SR_Loiselle, E2.to.E3, E4.to.E6, DecAbsCoeff254, campaign, site, groups.x)
@@ -149,13 +149,13 @@ NPOC_var_plot <- ggplot(DOC_variance_sum) +
 #dev.off()
 
 #pca_data <- data_sum2%>% #or put BDOC_normalised_components for the normalised comp analysis
-  #select(starts_with("Comp"),BDOC.x, SUVA254, 
-   #      FIX, HIX2, beta.alpha, DecAbsCoeff420, DecAbsCoeff430, DecAbsCoeff436, slope_classic, 
-    #     E2.to.E3, E4.to.E6)
+#select(starts_with("Comp"),BDOC.x, SUVA254, 
+#      FIX, HIX2, beta.alpha, DecAbsCoeff420, DecAbsCoeff430, DecAbsCoeff436, slope_classic, 
+#     E2.to.E3, E4.to.E6)
 pca_data <- BDOC_normalised_components%>% #or put data_sum2 
   select(starts_with("Comp"), site, campaign,
-        SUVA254, FIX, HIX2, beta.alpha, slope_short_Helms,SR_Loiselle,
-        E2.to.E3, E4.to.E6)
+         SUVA254, FIX, HIX2, beta.alpha, slope_short_Helms,SR_Loiselle,
+         E2.to.E3, E4.to.E6)
 
 wine.pca <- prcomp(pca_data[,-(9:10)], scale. = TRUE) 
 summary(wine.pca)
@@ -190,16 +190,16 @@ par(mfrow=c(2,2))
 plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
 ordi_TempAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[1]]$site,
                          alpha=150, col=c('#043005'))
-  
+
 plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
 plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
 ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
-                         alpha=150, col=c('#942D0A'))
+                        alpha=150, col=c('#942D0A'))
 plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
-                         alpha=150, col=c('#E65525'))
+                        alpha=150, col=c('#E65525'))
 
 par(mfrow=c(1,1))
 
@@ -238,7 +238,7 @@ distance_matrix %>%
   scale_fill_manual(values= c("#043005","#4F9608"))+
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
   theme(plot.tag.position=c(0.65,0.10))
-  
+
 
 distance_matrix %>% 
   filter(groups=="MedAlt" | groups=="MedNat") %>%
@@ -262,7 +262,7 @@ LC_OCD_cor <- data_sum %>% select("site", "campaign","BDOC","CDOC","HMWS_C",
          "% LMWS_C"=LMWS_C*100/BDOC,
          "HMWS (C:N)"=HMWS_C/HMWS_N, 
          "humic (C:N)"=humic_like_substance_C/HS
-         )
+  )
 
 write_delim(x=(LC_OCD_cor %>% group_by(site) %>% summarise(
   HMWS_C=mean(HMWS_C, na.rm = T), 
@@ -339,7 +339,7 @@ plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 plot_LCOCD <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue") +
   annotate("text", x = (LC_OCD_rot$PC1), y = (LC_OCD_rot$PC2), label = LC_OCD_rot$Variables, size=4, color="blue")+
-    labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
   theme_pca()+  
   theme(plot.tag.position=c(0.28,0.97))+ 
   scale_x_continuous(limits=c(-1,1), n.breaks=10)+
@@ -381,23 +381,23 @@ flow_data <- flow_data %>%
   filter(Date > dmy("01-10-2017"), Date < dmy("01-09-2018"))
 
 
- # plot with normalized component PC's
- data_sum4 <- cbind(wine.pca$x[,1:2], as.data.frame(pca_data[,c("site","campaign")]))
- for(i in 1:nrow(data_sum4)){
-   if (data_sum4[["campaign"]][[i]] == "apr") {
-     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("11/04/2018"))
-   } else if (data_sum4[["campaign"]][[i]] == "oct") {
-     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("11/10/2017"))
-   } else if (data_sum4[["campaign"]][[i]] == "dec"){
-     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("13/12/2017"))
-   } else if (data_sum4[["campaign"]][[i]] == "feb"){
-     data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("14/02/2018"))
-   } else if (data_sum4[["campaign"]][[i]] == "may"){
-     data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("13/06/2018"))
-   } else if (data_sum4[["campaign"]][[i]] == "aug") {
-     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("14/08/2018"))
-   } else {data_sum4[["exact_date"]][[i]] <- (0)}
- }
+# plot with normalized component PC's
+data_sum4 <- cbind(wine.pca$x[,1:2], as.data.frame(pca_data[,c("site","campaign")]))
+for(i in 1:nrow(data_sum4)){
+  if (data_sum4[["campaign"]][[i]] == "apr") {
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("11/04/2018"))
+  } else if (data_sum4[["campaign"]][[i]] == "oct") {
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("11/10/2017"))
+  } else if (data_sum4[["campaign"]][[i]] == "dec"){
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("13/12/2017"))
+  } else if (data_sum4[["campaign"]][[i]] == "feb"){
+    data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("14/02/2018"))
+  } else if (data_sum4[["campaign"]][[i]] == "may"){
+    data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("13/06/2018"))
+  } else if (data_sum4[["campaign"]][[i]] == "aug") {
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("14/08/2018"))
+  } else {data_sum4[["exact_date"]][[i]] <- (0)}
+}
 
 data_sum4[["exact_date"]] <- as.Date(unlist(data_sum4[["exact_date"]]))
 data_sum4 <- data_sum4 %>% as_tibble()
@@ -426,7 +426,7 @@ freq_duration_pulses_ind <- read_csv("Hydra_Hydro_Ind_subs_group4.csv")
 rate_freq_ind <- read_csv("Hydra_Hydro_Ind_subs_group5.csv")
 
 meta_indices <- left_join(magnitude_ind,magnitude_duration_extreme_ind,timing_extreme_ind,by="Stream") %>%
- left_join(freq_duration_pulses_ind,rate_freq_ind,by="Stream") %>%
+  left_join(freq_duration_pulses_ind,rate_freq_ind,by="Stream") %>%
   filter(Stream!="Carrion") #tkaing out carrion from the analysis
 
 pca_data2 <- meta_indices %>%
@@ -444,7 +444,7 @@ ggplot(pca_data2, aes(x=wine.pca2$x[,3], y=wine.pca2$x[,4]))+
   geom_point(aes(fill=data_sum5$groups), shape=21, size=2.5, colour="black")+
   scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
   geom_segment(data = PCAloadings, aes(x = 0, y = 0, xend = (PC3*2),
-                                      yend = (PC4*2)), arrow = arrow(length = unit(1/10, "picas")),color = "black") +
+                                       yend = (PC4*2)), arrow = arrow(length = unit(1/10, "picas")),color = "black") +
   annotate("text", x = (PCAloadings$PC3*10), y = (PCAloadings$PC4*10),
            label = PCAloadings$Variables)+
   theme_classic()+
@@ -521,7 +521,8 @@ data_sum5 <- data_sum5 %>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-model <-  pls(meta_indices, data_sum5[4], ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
+selected_variable <- data_sum5[4]
+model <-  pls(meta_indices, selected_variable, ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
 summary(model)
@@ -545,7 +546,7 @@ par(mfrow = c(1, 1))
 plotVIPScores(model, show.labels=T)
 plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
 vip <-  vipscores(model, ncomp = 1)
-m3 = pls(meta_indices, data_sum5[4], 1, scale = T, cv = 1, exclcols = (vip < 0.5))
+m3 <-  pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exclcols = (vip < 0.5))
 
 plotSelectivityRatio(model,  type = "h", show.labels = TRUE)
 plotSelectivityRatio(model, ncomp = 2, type = "h", show.labels = TRUE)
@@ -563,7 +564,7 @@ summary(model$coeffs, ncomp = 1)
 exclcols <-  model$coeffs$p.values[, 1, 1] > 0.15
 show(exclcols)
 
-newm <-  pls(meta_indices, data_sum5[4], 1, scale = TRUE, cv = 1, exclcols = exclcols)
+newm <-  pls(meta_indices, selected_variable, 1, scale = TRUE, cv = 1, exclcols = exclcols)
 summary(newm)
 plot(newm$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 plotVIPScores(newm, ncomp = 1, type = "h", show.labels = TRUE)
@@ -578,11 +579,30 @@ plotXResiduals(newm$res$cal)
 
 plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
 vip <-  vipscores(model, ncomp = 1)
-model_selected <- pls(meta_indices, data_sum5[4], 1, scale = T, cv = 1, exclcols = (vip < 1))
+model_selected <- pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exclcols = (vip < 1))
 plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
+plot(model_selected$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 
+reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
+vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
 
+# BE  CAREFUL HERE: CORRECT THIS FOR REPLICABILITY, OTHERWISE ONLY DO IT WHEN DATA_SUM5[[5]]
+reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
+vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
 
+reg_coeffs <- left_join(reg_coeffs_PC1_var%>% rownames_to_column("indice"), reg_coeffs_PC2_var%>% rownames_to_column("indice"), by="indice")
+colnames(reg_coeffs) <- c("indice", "var_PC1", "var_PC2")
+reg_coeffs %>%
+  filter(var_PC1=="0" && var_PC2=="0")
+%>% t()
+
+colnames(reg_coeffs) <- reg_coeffs[1,]
+reg_coeffs2 <- reg_coeffs[2:3,]
+rownames(reg_coeffs2) <- c("var_PC1", "var_PC2")
+
+reg_coeffs3 <-  reg_coeffs2%>% as.array()
 
 #### Heatmap for indices and DOM variance ####
 library(reshape2)
@@ -607,6 +627,9 @@ cormat_temp_nat <- round(cor((data_sum6%>%filter(groups=="TempNat")%>%select(-gr
 
 melted_indices <- reshape2::melt(cormat)
 melted_indices2 <- reshape2::melt(cormat2)
+melted_indices3 <- reshape2::melt(reg_coeffs3)
+melted_indices3$value <- as.numeric(melted_indices3$value)
+
 
 melted_indices_medalt <- reshape2::melt(cormat_med_alt)
 melted_indices_tempalt <- reshape2::melt(cormat_temp_alt)
@@ -615,10 +638,10 @@ melted_indices_tempnat <- reshape2::melt(cormat_temp_nat)
 
 
 # Create a ggheatmap
-ggheatmap <- ggplot(melted_indices2, aes(Var2, Var1, fill = value))+ #
+ggheatmap <- ggplot(melted_indices3, aes(Var2, Var1, fill = value))+ #
   geom_raster()+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       midpoint = 0, limit = c(-0.05,0.05), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ # minimal theme
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
@@ -676,4 +699,4 @@ distance_matrix %>%
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
   scale_x_discrete(expand = c(0,2))+
   geom_segment(aes(x = 0,  xend = 0,y=3, yend=6), arrow = arrow(length = unit(0.5, "cm")))
-
+#######
