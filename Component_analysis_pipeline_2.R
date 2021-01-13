@@ -642,17 +642,25 @@ melted_indices_tempalt <- reshape2::melt(cormat_temp_alt)
 melted_indices_mednat <- reshape2::melt(cormat_med_nat)
 melted_indices_tempnat <- reshape2::melt(cormat_temp_nat)
 
+order <- c("M2", "M3", "l2", "lcv", "M1", "M6", "M7" ,"M8" ,"M9" ,"M11", "M12", "sdM1", "sdM6", "sdM7" ,"sdM8", "sdM9", "sdM10", "sdM11", "sdM12","X5", "X75" ,"1LF" ,"1HF", "3LF" ,"3HF" ,"7LF" ,"30LF" ,"30HF" ,"90LF", "90HF", "sd1LF" ,   "sd3LF",    "sd7LF"  , "sd30LF"  , "sd90LF"  , "sd90HF" ,  "BFI"  ,    "sdBFI" ,   "FRE1" ,    "FRE3"  ,   "FRE7"  ,   "nHigh" ,   "dPHigh" ,  "sddPHigh")
+order2 <- rep(order, c(2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2)) %>%as.factor()
+
+reorder(melted_indices3$Var2, order2)
 
 # Create a ggheatmap
-ggheatmap <- ggplot(melted_indices3, aes(Var2, Var1, fill = value))+ #
+ggheatmap <- ggplot(melted_indices3, aes(x=reorder(Var2, order2), y= Var1  , fill = value))+ 
   geom_raster()+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-0.1,0.1), space = "Lab", 
+                       midpoint = 0, limit = c(-0.04,0.04), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ # minimal theme
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
                                    size = 12, hjust = 1))+
   coord_fixed()
+
+geom_raster(position = c("M2", "M3", "l2", "lcv", "M1", "M6", "M7" ,"M8" ,"M9" ,"M11", "M12", "sdM1", "sdM6", "sdM7" ,"sdM8", "sdM9", "sdM10", "sdM11", "sdM12","X5", "X75" ,"1LF" ,"1HF", "3LF" ,"3HF" ,"7LF" ,"30LF" ,"30HF" ,"90LF", "sd1LF" ,   "sd3LF",    "sd7LF"  , "sd30LF"  , "sd90LF"  , "sd90HF" ,  "BFI"  ,    "sdBFI" ,   "FRE1" ,    "FRE3"  ,   "FRE7"  ,   "nHigh" ,   "dPHigh" ,  "sddPHigh"))+
+  
+
 # Print the heatmap
 print(ggheatmap)
 library(RColorBrewer)
@@ -665,16 +673,28 @@ heatmaplabels <- c("I2","Icv", "Ica", "Ikur", "Mean Monthly Flow_January", "Mean
                    "sd1LF", "sd1HF","sd3LF", "sd3HF","sd7LF", "sd7HF","sd30LF", "sd30HF","sd90LF", "sd90HF", "Number of 0-flow days (ZFD)", "7-day min flow/mean annual daily flows (BFI)", "sdZFD", "sdBFI",
                    "Number of high flow events per year (upper threshold 1-time median flow overall years)","Number of high flow events per year (upper threshold 3-time median flow overall years)","Number of high flow events per year (upper threshold 7-time median flow overall years)","sdFRE1", "sdFRE3", "sdFRE7", 
                    "Number of low pulses per year","Duration of low pulses per year","Number of high pulses per year","Duration of high pulses per year","sdnPLow", "sddPLow", "sdnHigh", "sddPHigh")
-coul <- colorRampPalette(brewer.pal(5, "RdBu"))(9)
+
+coul <- rev(colorRampPalette(brewer.pal(7, "RdBu"))(9))
 
 pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 
-pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
+pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 20, cellwidth = 20, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
                    angle_col = 45, color = coul)
+order <- c("M1","M2", "M3", "M11", "M12", 
+           "sdM12", "X5", "l2", "lcv", "30HF","sd90HF", 
+           "sdM1","sdM10", "FRE3",
+           "FRE7", "FRE1","nHigh", 
+           "sdM11", "1HF","3HF",
+           "1LF" ,  "3LF", "7LF" ,"30LF" ,"90LF", "sd1LF", "M6", "M7" ,"M8" ,"M9",  "BFI",
+           "sdM9", "sdM6", "sdM7" ,"sdM8", "sdBFI", "X75", "sd3LF", "sd7LF", "sd30LF", "sd90LF", 
+           "90HF", "dPHigh","sddPHigh")
+reg_coeffs5 <- reg_coeffs4[,order]
 
+ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 20, cellwidth = 20, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
+                   angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 15)
 
 #### Separate PC variation barplots ####
 # Anova with betadisper(vegadist) 
