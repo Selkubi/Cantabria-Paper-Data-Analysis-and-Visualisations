@@ -521,7 +521,7 @@ data_sum5 <- data_sum5 %>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-selected_variable <- data_sum5[4]
+selected_variable <- data_sum5[5]
 model <-  pls(meta_indices, selected_variable, ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
@@ -583,9 +583,9 @@ model_selected <- pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exc
 plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
 plot(model_selected$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 
-reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
-vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
+#reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+#reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
+#vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
 
 # BE  CAREFUL HERE: CORRECT THIS FOR REPLICABILITY, OTHERWISE ONLY DO IT WHEN DATA_SUM5[[5]]
 reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
@@ -594,15 +594,21 @@ vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
 
 reg_coeffs <- left_join(reg_coeffs_PC1_var%>% rownames_to_column("indice"), reg_coeffs_PC2_var%>% rownames_to_column("indice"), by="indice")
 colnames(reg_coeffs) <- c("indice", "var_PC1", "var_PC2")
-reg_coeffs %>%
-  filter(var_PC1=="0" && var_PC2=="0")
-%>% t()
+reg_coeffs_no_zero <- reg_coeffs %>%
+  filter(var_PC1!="0" | var_PC2!="0") %>% t()
 
-colnames(reg_coeffs) <- reg_coeffs[1,]
-reg_coeffs2 <- reg_coeffs[2:3,]
+
+colnames(reg_coeffs_no_zero) <- reg_coeffs_no_zero[1,]
+reg_coeffs2 <- reg_coeffs_no_zero[2:3,]
 rownames(reg_coeffs2) <- c("var_PC1", "var_PC2")
 
-reg_coeffs3 <-  reg_coeffs2%>% as.array()
+reg_coeffs3 <-  reg_coeffs2 %>% as.array()
+reg_coeffs4 <-  reg_coeffs2 %>% as_tibble(rownames=NA, )
+
+for(i in 1:length(reg_coeffs4)) {
+reg_coeffs4[i] <- as.numeric(unlist(reg_coeffs4[i]))
+}
+rownames(reg_coeffs4) <- c("var_PC1", "var_PC2")
 
 #### Heatmap for indices and DOM variance ####
 library(reshape2)
@@ -641,7 +647,7 @@ melted_indices_tempnat <- reshape2::melt(cormat_temp_nat)
 ggheatmap <- ggplot(melted_indices3, aes(Var2, Var1, fill = value))+ #
   geom_raster()+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-0.05,0.05), space = "Lab", 
+                       midpoint = 0, limit = c(-0.1,0.1), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ # minimal theme
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
@@ -659,16 +665,19 @@ heatmaplabels <- c("I2","Icv", "Ica", "Ikur", "Mean Monthly Flow_January", "Mean
                    "sd1LF", "sd1HF","sd3LF", "sd3HF","sd7LF", "sd7HF","sd30LF", "sd30HF","sd90LF", "sd90HF", "Number of 0-flow days (ZFD)", "7-day min flow/mean annual daily flows (BFI)", "sdZFD", "sdBFI",
                    "Number of high flow events per year (upper threshold 1-time median flow overall years)","Number of high flow events per year (upper threshold 3-time median flow overall years)","Number of high flow events per year (upper threshold 7-time median flow overall years)","sdFRE1", "sdFRE3", "sdFRE7", 
                    "Number of low pulses per year","Duration of low pulses per year","Number of high pulses per year","Duration of high pulses per year","sdnPLow", "sddPLow", "sdnHigh", "sddPHigh")
-coul <- colorRampPalette(brewer.pal(5, "RdBu"))(10)
+coul <- colorRampPalette(brewer.pal(5, "RdBu"))(9)
 
 pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 
+pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
+                   angle_col = 45, color = coul)
+
 
 #### Separate PC variation barplots ####
-#### Anova with betadisper(vegadist) ####
+# Anova with betadisper(vegadist) 
 betas <- vegdist(wine.pca$x[,1],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
 disp <- betas[["distances"]] %>%
