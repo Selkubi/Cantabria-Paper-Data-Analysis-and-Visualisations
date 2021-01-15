@@ -521,7 +521,7 @@ data_sum5 <- data_sum5 %>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-selected_variable <- data_sum5[5]
+selected_variable <- data_sum5[4]
 model <-  pls(meta_indices, selected_variable, ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
@@ -583,14 +583,14 @@ model_selected <- pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exc
 plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
 plot(model_selected$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 
-#reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-#reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
-#vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
+reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
+vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
 
 # BE  CAREFUL HERE: CORRECT THIS FOR REPLICABILITY, OTHERWISE ONLY DO IT WHEN DATA_SUM5[[5]]
-reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
-vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
+#reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+#reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
+#vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
 
 reg_coeffs <- left_join(reg_coeffs_PC1_var%>% rownames_to_column("indice"), reg_coeffs_PC2_var%>% rownames_to_column("indice"), by="indice")
 colnames(reg_coeffs) <- c("indice", "var_PC1", "var_PC2")
@@ -604,6 +604,7 @@ rownames(reg_coeffs2) <- c("var_PC1", "var_PC2")
 
 reg_coeffs3 <-  reg_coeffs2 %>% as.array()
 reg_coeffs4 <-  reg_coeffs2 %>% as_tibble(rownames=NA, )
+colnames(reg_coeffs4) [42] <- c("nPHigh")
 
 for(i in 1:length(reg_coeffs4)) {
 reg_coeffs4[i] <- as.numeric(unlist(reg_coeffs4[i]))
@@ -676,7 +677,7 @@ heatmaplabels <- c("I2","Icv", "Ica", "Ikur", "Mean Monthly Flow_January", "Mean
 
 coul <- rev(colorRampPalette(brewer.pal(7, "RdBu"))(9))
 
-pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
+pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), border_color = "grey",
                    angle_col = 45, color = coul)
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
@@ -686,15 +687,15 @@ pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 2
 order <- c("M1","M2", "M3", "M11", "M12", 
            "sdM12", "X5", "l2", "lcv", "30HF","sd90HF", 
            "sdM1","sdM10", "FRE3",
-           "FRE7", "FRE1","nHigh", 
+           "FRE7", "FRE1","nPHigh", 
            "sdM11", "1HF","3HF",
            "1LF" ,  "3LF", "7LF" ,"30LF" ,"90LF", "sd1LF", "M6", "M7" ,"M8" ,"M9",  "BFI",
            "sdM9", "sdM6", "sdM7" ,"sdM8", "sdBFI", "X75", "sd3LF", "sd7LF", "sd30LF", "sd90LF", 
            "90HF", "dPHigh","sddPHigh")
 reg_coeffs5 <- reg_coeffs4[,order]
 
-ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 20, cellwidth = 20, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
-                   angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 15)
+ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 17, cellwidth = 17, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
+                   angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 12, labels_row=c("PC1 variation", "PC2 variation"))
 
 #### Separate PC variation barplots ####
 # Anova with betadisper(vegadist) 
