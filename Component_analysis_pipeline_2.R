@@ -541,8 +541,8 @@ plotRegcoeffs(model)
 plotRegcoeffs(model, ncomp = 2)
 plot(model$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 plot(model$coeffs, type = "b", show.labels = TRUE)
-
 par(mfrow = c(1, 1))
+
 plotVIPScores(model, show.labels=T)
 plotVIPScores(model, ncomp = 1, type = "h", show.labels = TRUE)
 vip <-  vipscores(model, ncomp = 1)
