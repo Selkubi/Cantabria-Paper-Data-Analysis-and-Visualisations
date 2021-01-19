@@ -138,11 +138,23 @@ DOC_variance_sum <- data_sum2 %>%
     groups=groups.x
   )
 
+
+theme_pca <- function (base_size = 12, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) %+replace% 
+    theme(
+      panel.grid = element_blank()
+    )   
+}
+
 NPOC_var_plot <- ggplot(DOC_variance_sum) +
-  theme_bw()+
+  theme_pca()+
   geom_boxplot(aes(x=variance_NPOC, y=groups), fill=c(col=c('#942D0A','#E65525', '#043005', "#4F9608")))+
   coord_flip()+
-  labs(title="Seasonal NPOC variance per hydrological class")
+  ylab("Groups")+xlab("DOC Concentration Variance")+
+  theme(axis.text=element_text(size=11),axis.title=element_text(size=11))+
+   scale_y_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
+                    labels = c("Altered \nMediterranean", "Natural \nMediterranean", "Altered \nTemperate", "Natural \nTemperate"))
+
 #dev.new()
 #png('Seasonal NPOC variance per hydrological class.png')
 #NPOC_var_plot
@@ -185,32 +197,36 @@ ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 
 # component loadings comparison boxplots
 
-par(mfrow=c(2,2))
+par(mfrow=c(2,2),mai=c(0.3,0.3,0.3,0.3))
 
-plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_TempAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[1]]$site,
                          alpha=150, col=c('#043005'))
 
-plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
-plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
-ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
+plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
+ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=T, show.groups = group_list[[3]]$site,
                         alpha=150, col=c('#942D0A'))
-plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
                         alpha=150, col=c('#E65525'))
 
 par(mfrow=c(1,1))
 
 #### Anova with betadisper(vegadist) ####
-betas <- vegdist(wine.pca$x[,1:2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+betas <- vegdist(wine.pca$x[,2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
 disp <- betas[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
   as_tibble(rownames="site")
+
+par(mfrow=c(1,1),mai=c(0.6,0.5,0.3,0.3), mex=1.5)
 boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
-        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), main="Variance in DOM (quality) over the seasons")
+        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), names=c("Altered \nMediterr.", "Natural\nMediterr.", "Altered \nTemperate", "Natural \nTemperate"))
+text(x=4.4, y=3.1, labels="(C)")
+
 
 #png('Seasonal quality boxplot of variance across sites')
 #seasonal_variance_boxplot
@@ -228,28 +244,26 @@ anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
 # Average centroid distance boxplots 
 distance_matrix <- tibble(distances=betas[["distances"]], site=betas[["group"]])
 distance_matrix <- left_join(distance_matrix, unique_data, by="site")
-distance_matrix %>% 
-  filter(groups=="TempAlt" | groups=="TempNat") %>%
-  ggplot() +
-  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
-  theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.1. Temperate sites, PC2"), tag="Rsqr=0.116")+
-  #scale_fill_manual(values= c("#942D0A", "#E65525"))+
-  scale_fill_manual(values= c("#043005","#4F9608"))+
-  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
-  theme(plot.tag.position=c(0.65,0.10))
 
-
+#Distance to centroid of MEditerranean sites
 distance_matrix %>% 
   filter(groups=="MedAlt" | groups=="MedNat") %>%
   ggplot() +
   geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
-  theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.2. Mediterranean sites, PC2"), tag="Rsqr=0.191")+
-  scale_fill_manual(values= c("#942D0A", "#E65525"))+
-  #scale_fill_manual(values= c("#043005","#4F9608"))+
+  theme_pca()+ coord_flip()+
+  scale_fill_manual(values= c("#942D0A", "#E65525"), name = "Class", labels = c("Altered \nMEditerranean", "Natural \nMediterranean"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(B)\nR^2=0.937"))+ theme(plot.tag.position=c(0.70,0.96))+
+  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")
+
+#Distance to centroid of Temperate sites
+distance_matrix %>% 
+  filter(groups=="TempAlt" | groups=="TempNat") %>%
+  ggplot() +
+  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
+  theme_pca()+ coord_flip()+
+  labs(color="Groups", x="Sites", y="Distance to centroid")+
+  scale_fill_manual(values= c("#043005","#4F9608"), name = "Class", labels = c("Altered \nTemperate", "Natural \nTemperate"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(A)\nR^2=0.001"))+theme(plot.tag.position=c(0.74,0.96))+
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
-  theme(plot.tag.position=c(0.65,0.10))
+  theme(plot.tag.position=c(0.68,0.95))
 
 
 #### LC-OCD data reflection onto the PCA space ####
@@ -425,14 +439,16 @@ timing_extreme_ind <- read_csv("Hydra_Hydro_Ind_subs_group3.csv")
 freq_duration_pulses_ind <- read_csv("Hydra_Hydro_Ind_subs_group4.csv")
 rate_freq_ind <- read_csv("Hydra_Hydro_Ind_subs_group5.csv")
 
-meta_indices <- left_join(magnitude_ind,magnitude_duration_extreme_ind,timing_extreme_ind,by="Stream") %>%
-  left_join(freq_duration_pulses_ind,rate_freq_ind,by="Stream") %>%
+meta_indices <-  left_join(magnitude_ind, magnitude_duration_extreme_ind, timing_extreme_ind, by="Stream") %>%
+  left_join(timing_extreme_ind, by="Stream") %>%
+  left_join(freq_duration_pulses_ind, by="Stream") %>%
+  left_join(rate_freq_ind, by="Stream") %>%
   filter(Stream!="Carrion") #tkaing out carrion from the analysis
 
 pca_data2 <- meta_indices %>%
-  filter(Stream!="Carrion") %>%
   left_join(data_sum5[,1:2], by=c("Stream"="site"))
-wine.pca2 <- prcomp(pca_data2[,-c(1,72)], scale. = TRUE) 
+
+wine.pca2 <- prcomp(pca_data2[,-c(1,87)], scale. = TRUE) 
 summary(wine.pca2)
 screeplot(wine.pca2)
 # The kaiser rule (with the eigenvalues at sdev) indicates the first 9 pc's are important
@@ -440,7 +456,7 @@ screeplot(wine.pca2)
 # So first try modeling with only the 9 PC's
 
 PCAloadings <- data.frame(Variables = rownames(wine.pca2$rotation), wine.pca2$rotation)
-ggplot(pca_data2, aes(x=wine.pca2$x[,3], y=wine.pca2$x[,4]))+
+ggplot(pca_data2, aes(x=wine.pca2$x[,1], y=wine.pca2$x[,2]))+
   geom_point(aes(fill=data_sum5$groups), shape=21, size=2.5, colour="black")+
   scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
   geom_segment(data = PCAloadings, aes(x = 0, y = 0, xend = (PC3*2),
@@ -514,14 +530,14 @@ library(pls)
 library(plsVarSel)
 library(mdatools)
 
-meta_indices <- meta_indices %>% arrange(Stream) %>%
+meta_indices %<>% arrange(Stream) %>%
   column_to_rownames("Stream")
 
-data_sum5 <- data_sum5 %>% arrange(site) %>%
+data_sum5 %<>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-selected_variable <- data_sum5[4]
+selected_variable <- data_sum5[5]
 model <-  pls(meta_indices, selected_variable, ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
@@ -583,14 +599,14 @@ model_selected <- pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exc
 plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
 plot(model_selected$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 
-reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
-vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
+#reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+#reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
+#vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
 
 # BE  CAREFUL HERE: CORRECT THIS FOR REPLICABILITY, OTHERWISE ONLY DO IT WHEN DATA_SUM5[[5]]
-#reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-#reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
-#vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
+reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
+vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
 
 reg_coeffs <- left_join(reg_coeffs_PC1_var%>% rownames_to_column("indice"), reg_coeffs_PC2_var%>% rownames_to_column("indice"), by="indice")
 colnames(reg_coeffs) <- c("indice", "var_PC1", "var_PC2")
@@ -604,7 +620,6 @@ rownames(reg_coeffs2) <- c("var_PC1", "var_PC2")
 
 reg_coeffs3 <-  reg_coeffs2 %>% as.array()
 reg_coeffs4 <-  reg_coeffs2 %>% as_tibble(rownames=NA, )
-colnames(reg_coeffs4) [42] <- c("nPHigh")
 
 for(i in 1:length(reg_coeffs4)) {
 reg_coeffs4[i] <- as.numeric(unlist(reg_coeffs4[i]))
@@ -624,8 +639,8 @@ meta_indices2 <- meta_indices %>% arrange(rownames(meta_indices)) %>%
   select(-var_PC1, -var_PC2, -meanPC1, -meanPC2) %>%
   column_to_rownames("rowname")
 
-cormat <- round(cor(ordered_flow_scores[,-20], meta_indices2[,-71]),3)
-cormat2 <- round(cor(data_sum6[,-1], meta_indices2[,-71]),3)
+cormat <- round(cor(ordered_flow_scores[,-20], meta_indices2[,-86]),3)
+cormat2 <- round(cor(data_sum6[,-1], meta_indices2[,-86]),3)
 cormat_med_alt <- round(cor((data_sum6%>%filter(groups=="MedAlt")%>%select(-groups)), meta_indices2%>%filter(groups=="MedAlt")%>%select(-groups)),3)
 cormat_temp_alt <- round(cor((data_sum6%>%filter(groups=="TempAlt")%>%select(-groups)), meta_indices2%>%filter(groups=="TempAlt")%>%select(-groups)),3)
 cormat_med_nat <- round(cor((data_sum6%>%filter(groups=="MedNat")%>%select(-groups)), meta_indices2%>%filter(groups=="MedNat")%>%select(-groups)),3)
@@ -643,24 +658,16 @@ melted_indices_tempalt <- reshape2::melt(cormat_temp_alt)
 melted_indices_mednat <- reshape2::melt(cormat_med_nat)
 melted_indices_tempnat <- reshape2::melt(cormat_temp_nat)
 
-order <- c("M2", "M3", "l2", "lcv", "M1", "M6", "M7" ,"M8" ,"M9" ,"M11", "M12", "sdM1", "sdM6", "sdM7" ,"sdM8", "sdM9", "sdM10", "sdM11", "sdM12","X5", "X75" ,"1LF" ,"1HF", "3LF" ,"3HF" ,"7LF" ,"30LF" ,"30HF" ,"90LF", "90HF", "sd1LF" ,   "sd3LF",    "sd7LF"  , "sd30LF"  , "sd90LF"  , "sd90HF" ,  "BFI"  ,    "sdBFI" ,   "FRE1" ,    "FRE3"  ,   "FRE7"  ,   "nHigh" ,   "dPHigh" ,  "sddPHigh")
-order2 <- rep(order, c(2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2)) %>%as.factor()
-
-reorder(melted_indices3$Var2, order2)
-
 # Create a ggheatmap
-ggheatmap <- ggplot(melted_indices3, aes(x=reorder(Var2, order2), y= Var1  , fill = value))+ 
+ggplot(melted_indices2, aes(x=Var2, y= Var1  , fill = value))+ 
   geom_raster()+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-0.04,0.04), space = "Lab", 
+                       midpoint = 0, limit = c(-0.8,0.8), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ # minimal theme
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
                                    size = 12, hjust = 1))+
   coord_fixed()
-
-geom_raster(position = c("M2", "M3", "l2", "lcv", "M1", "M6", "M7" ,"M8" ,"M9" ,"M11", "M12", "sdM1", "sdM6", "sdM7" ,"sdM8", "sdM9", "sdM10", "sdM11", "sdM12","X5", "X75" ,"1LF" ,"1HF", "3LF" ,"3HF" ,"7LF" ,"30LF" ,"30HF" ,"90LF", "sd1LF" ,   "sd3LF",    "sd7LF"  , "sd30LF"  , "sd90LF"  , "sd90HF" ,  "BFI"  ,    "sdBFI" ,   "FRE1" ,    "FRE3"  ,   "FRE7"  ,   "nHigh" ,   "dPHigh" ,  "sddPHigh"))+
-  
 
 # Print the heatmap
 print(ggheatmap)
@@ -682,20 +689,23 @@ pheatmap::pheatmap((cormat), cluster_cols=F, cluster_rows=F, cellheight = 12, ce
 pheatmap::pheatmap((cormat2), cluster_cols=F, cluster_rows=F, cellheight = 12, cellwidth = 12, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black", gaps_col =c(4, 16, 28, 42, 52, 56, 62), labels_col=heatmaplabels,border_color = "grey",
                    angle_col = 45, color = coul)
 
-pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 20, cellwidth = 20, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
+pheatmap::pheatmap((reg_coeffs4), cluster_cols=T, cluster_rows=F, cellheight = 15, cellwidth = 15, display_numbers = F, number_format = "%.3f", fontsize_number=5,number_color = "black",  border_color = "grey",
                    angle_col = 45, color = coul)
-order <- c("M1","M2", "M3", "M11", "M12", 
-           "sdM12", "X5", "l2", "lcv", "30HF","sd90HF", 
-           "sdM1","sdM10", "FRE3",
-           "FRE7", "FRE1","nPHigh", 
-           "sdM11", "1HF","3HF",
-           "1LF" ,  "3LF", "7LF" ,"30LF" ,"90LF", "sd1LF", "M6", "M7" ,"M8" ,"M9",  "BFI",
-           "sdM9", "sdM6", "sdM7" ,"sdM8", "sdBFI", "X75", "sd3LF", "sd7LF", "sd30LF", "sd90LF", 
-           "90HF", "dPHigh","sddPHigh")
+order <- c("nPos","BFI","sdJMIn", "sdReversals", "sdJMax",
+            "1LF","3LF", "7LF", "30LF", "90LF",  "sd1LF", "sd90LF", "M6","M7", "M8",  "M9",  "sdM9", 
+           "sdM6", "sdM7", "sdM8","sd3LF","sd7LF","sd30LF",  "sdBFI", "X75",
+           "90HF","dPHigh","sdnNeg", "sdnPos","sddPHigh","Neg",
+          "sdNeg",
+          "Pos","sdPos", "FRE7","FRE3","nPHigh","sdM10", "sdM1","sdM11", "1HF","3HF" , "JMin","FRE1",
+          "nNeg", "30HF",  "M1","M2","M3","M11", "M12", "sdM12",  "X5", "sd90HF", "l2", "lcv"
+          )
+
 reg_coeffs5 <- reg_coeffs4[,order]
 
-ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 17, cellwidth = 17, display_numbers = F, number_format = "%.1f", fontsize_number=5,number_color = "black",  border_color = "grey",
-                   angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 12, labels_row=c("PC1 variation", "PC2 variation"))
+
+
+ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 15, cellwidth =15, display_numbers = F, number_format = "%.3f", fontsize_number=5,number_color = "black",  border_color = "grey",
+                  angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 12, labels_row=c("PC1 variation", "PC2 variation"))
 
 #### Separate PC variation barplots ####
 # Anova with betadisper(vegadist) 
