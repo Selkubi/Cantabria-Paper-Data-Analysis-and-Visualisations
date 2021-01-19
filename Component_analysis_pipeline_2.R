@@ -138,11 +138,23 @@ DOC_variance_sum <- data_sum2 %>%
     groups=groups.x
   )
 
+
+theme_pca <- function (base_size = 12, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) %+replace% 
+    theme(
+      panel.grid = element_blank()
+    )   
+}
+
 NPOC_var_plot <- ggplot(DOC_variance_sum) +
-  theme_bw()+
+  theme_pca()+
   geom_boxplot(aes(x=variance_NPOC, y=groups), fill=c(col=c('#942D0A','#E65525', '#043005', "#4F9608")))+
   coord_flip()+
-  labs(title="Seasonal NPOC variance per hydrological class")
+  ylab("Groups")+xlab("DOC Concentration Variance")+
+  theme(axis.text=element_text(size=11),axis.title=element_text(size=11))+
+   scale_y_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
+                    labels = c("Altered \nMediterranean", "Natural \nMediterranean", "Altered \nTemperate", "Natural \nTemperate"))
+
 #dev.new()
 #png('Seasonal NPOC variance per hydrological class.png')
 #NPOC_var_plot
@@ -185,19 +197,19 @@ ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 
 # component loadings comparison boxplots
 
-par(mfrow=c(2,2))
+par(mfrow=c(2,2),mai=c(0.3,0.3,0.3,0.3))
 
-plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_TempAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[1]]$site,
                          alpha=150, col=c('#043005'))
 
-plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
-plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
                         alpha=150, col=c('#942D0A'))
-plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=2, cex.axis=1.25)
+plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
                         alpha=150, col=c('#E65525'))
 
@@ -209,8 +221,12 @@ betas <- vegdist(wine.pca$x[,1:2],method="euclidean") %>% #if you want to do onl
 disp <- betas[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
   as_tibble(rownames="site")
+
+par(mfrow=c(1,1),mai=c(0.6,0.5,0.3,0.3), mex=1.5)
 boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
-        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), main="Variance in DOM (quality) over the seasons")
+        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), names=c("Altered \nMediterr.", "Natural\nMediterr.", "Altered \nTemperate", "Natural \nTemperate"))
+text(x=4.4, y=3.1, labels="(C)")
+
 
 #png('Seasonal quality boxplot of variance across sites')
 #seasonal_variance_boxplot
@@ -226,30 +242,28 @@ anova(lm(disp_med[["value"]]~factor(disp_med$groups)))
 anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
 
 # Average centroid distance boxplots 
+#Distance to centroid of MEditerranean sites
 distance_matrix <- tibble(distances=betas[["distances"]], site=betas[["group"]])
 distance_matrix <- left_join(distance_matrix, unique_data, by="site")
-distance_matrix %>% 
-  filter(groups=="TempAlt" | groups=="TempNat") %>%
-  ggplot() +
-  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
-  theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.1. Temperate sites, PC2"), tag="Rsqr=0.116")+
-  #scale_fill_manual(values= c("#942D0A", "#E65525"))+
-  scale_fill_manual(values= c("#043005","#4F9608"))+
-  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
-  theme(plot.tag.position=c(0.65,0.10))
-
-
 distance_matrix %>% 
   filter(groups=="MedAlt" | groups=="MedNat") %>%
   ggplot() +
   geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
-  theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid", subtitle =("b.2. Mediterranean sites, PC2"), tag="Rsqr=0.191")+
-  scale_fill_manual(values= c("#942D0A", "#E65525"))+
-  #scale_fill_manual(values= c("#043005","#4F9608"))+
+  theme_pca()+ coord_flip()+
+  scale_fill_manual(values= c("#942D0A", "#E65525"), name = "Class", labels = c("Altered \nMEditerranean", "Natural \nMediterranean"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(B)\nR^2=0.937"))+ theme(plot.tag.position=c(0.70,0.96))+
+  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")
+
+#Distance to centroid of Temperate sites
+
+distance_matrix %>% 
+  filter(groups=="TempAlt" | groups=="TempNat") %>%
+  ggplot() +
+  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
+  theme_pca()+ coord_flip()+
+  labs(color="Groups", x="Sites", y="Distance to centroid")+
+  scale_fill_manual(values= c("#043005","#4F9608"), name = "Class", labels = c("Altered \nTemperate", "Natural \nTemperate"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(A)\nR^2=0.001"))+theme(plot.tag.position=c(0.74,0.96))+
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
-  theme(plot.tag.position=c(0.65,0.10))
+  theme(plot.tag.position=c(0.68,0.95))
 
 
 #### LC-OCD data reflection onto the PCA space ####
