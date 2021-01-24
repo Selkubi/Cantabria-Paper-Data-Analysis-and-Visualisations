@@ -207,12 +207,9 @@ plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", 
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
 plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
-<<<<<<< HEAD
-ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=T, show.groups = group_list[[3]]$site,
-=======
 ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
->>>>>>> d578d27ab27749c91ae2af9bf292b19f4b132310
-                        alpha=150, col=c('#942D0A'))
+                        alpha=150, col=c("#942D0A"))
+
 plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
                         alpha=150, col=c('#E65525'))
@@ -258,11 +255,6 @@ distance_matrix %>%
   theme_pca()+ coord_flip()+
   scale_fill_manual(values= c("#942D0A", "#E65525"), name = "Class", labels = c("Altered \nMEditerranean", "Natural \nMediterranean"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(B)\nR^2=0.937"))+ theme(plot.tag.position=c(0.70,0.96))+
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")
-<<<<<<< HEAD
-=======
-
-#Distance to centroid of Temperate sites
->>>>>>> d578d27ab27749c91ae2af9bf292b19f4b132310
 
 #Distance to centroid of Temperate sites
 distance_matrix %>% 
@@ -533,7 +525,6 @@ summary(simple_mod_temp)
 step(simple_mod_temp, scope=~.+PC1+PC2+PC3+PC4, direction="both")
 extractAIC(simple_mod_temp)
 plot(simple_mod_med)
-
 
 #### PLSR trial ####
 library(pls)
