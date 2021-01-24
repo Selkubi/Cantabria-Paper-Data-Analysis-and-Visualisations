@@ -206,8 +206,10 @@ ordi_TempAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="
 plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
+
 plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
-ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=T, show.groups = group_list[[3]]$site,
+ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
+                        alpha=150, col=c("#942D0A"))
 
 plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
@@ -543,7 +545,7 @@ data_sum5 %<>% arrange(site) %>%
   column_to_rownames("site")
 
 # with mda tools
-selected_variable <- data_sum5[5]
+selected_variable <- data_sum5[4]
 model <-  pls(meta_indices, selected_variable, ncomp=15,  cv=list("rand", 4, 4), ncomp.selcrit="min", scale = TRUE, info = "meta indice-")
 show(model$ncomp.selected)
 plotRMSE(model)
@@ -605,14 +607,14 @@ model_selected <- pls(meta_indices, selected_variable, 1, scale = T, cv = 1, exc
 plotVIPScores(model_selected, ncomp = 1, type = "h", show.labels = TRUE)
 plot(model_selected$coeffs, ncomp = 1, type = "b", show.labels = TRUE)
 
-#reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-#reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
-#vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
+reg_coeffs_PC1_var  <- model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+reg_coeffs_PC1_var <- reg_coeffs_PC1_var# %>% filter(reg_coeffs_PC1_var [,1]!=0)
+vip_PC1_var <-  vipscores(model_selected, ncomp = 1)
 
 # BE  CAREFUL HERE: CORRECT THIS FOR REPLICABILITY, OTHERWISE ONLY DO IT WHEN DATA_SUM5[[5]]
-reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
-reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
-vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
+#reg_coeffs_PC2_var <-  model_selected[["coeffs"]][["values"]] %>% as_tibble(rownames = NA) 
+#reg_coeffs_PC2_var <- reg_coeffs_PC2_var # %>% filter(reg_coeffs[,1]!=0)
+#vip_PC2_var <-  vipscores(model_selected, ncomp = 1)
 
 reg_coeffs <- left_join(reg_coeffs_PC1_var%>% rownames_to_column("indice"), reg_coeffs_PC2_var%>% rownames_to_column("indice"), by="indice")
 colnames(reg_coeffs) <- c("indice", "var_PC1", "var_PC2")
@@ -713,36 +715,28 @@ reg_coeffs5 <- reg_coeffs4[,order]
 ordered_heatmap <- pheatmap::pheatmap((reg_coeffs5), cluster_cols=F, cluster_rows=F, cellheight = 15, cellwidth =15, display_numbers = F, number_format = "%.3f", fontsize_number=5,number_color = "black",  border_color = "grey",
                   angle_col = 45, color = coul, main= "Explanatory Indices", fontsize = 12, labels_row=c("PC1 variation", "PC2 variation"))
 
-#### Separate PC variation barplots ####
-# Anova with betadisper(vegadist) 
-betas <- vegdist(wine.pca$x[,1],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
-  betadisper(group = BDOC_normalised_components$site) 
-disp <- betas[["distances"]] %>%
-  tapply(BDOC_normalised_components$site, mean) %>%
-  as_tibble(rownames="site")
-boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
-        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), main="Variance in DOM (quality) over the seasons")
+##### RAndom Forest Trial ####
 
-unique_data<-site_info[,c("site", "groups")]
-disp<-left_join(disp, as_tibble(unique_data), by=c("site"="site"))
+data_sum6 <- data_sum5
+data_sum6 <- data_sum6 %>% rownames_to_column("site")
+data_sum6 <- data_sum6 %>%
+  left_join(meta_indices2%>%rownames_to_column("site"), by=c("site", "groups")) %>% as_tibble()
 
-disp_med<-disp[str_sub(disp$groups, 1,3) == "Med",]
-disp_temp<-disp[str_sub(disp$groups, 1,3) =="Tem",]
+library(randomForest)
+rf1_forcing <- randomForest(var_PC1 ~nPos+BFI+sdJMIn+sdReversals+sdJMax+
+                            +sd1LF+sd90LF+M6+M7+M8+M9+sdM9+ 
+                            +sdM6+sdM7+sdM8+sd3LF+sd7LF+sd30LF+sdBFI+X75+
+                            dPHigh+sdnNeg+sdnPos+sddPHigh+Neg+sdNeg+
+                            Pos+sdPos+FRE7+FRE3+nPHigh+sdM10+sdM1+sdM11+JMin+FRE1+
+                            nNeg+30HF+M1+M2+M3+M11+M12+sdM12+X5+sd90HF+l2+lcv+
+                            #1LF+3LF+7LF+30LF+90LF+90HF+1HF+3HF
+                            , data=data_sum6)
 
-anova(lm(disp_med[["value"]]~factor(disp_med$groups)))
-anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
+data_sum6 %>% mutate(pred = predict(rf1_forcing)) %>% ggplot(aes(pred, var_PC1)) + geom_point()
 
-distance_matrix <- tibble(distances=betas[["distances"]], site=betas[["group"]])
-distance_matrix <- left_join(distance_matrix, unique_data, by="site")
-distance_matrix %>% 
-  filter(groups=="TempAlt" | groups=="TempNat") %>%
-  ggplot() + 
-  geom_boxplot(aes(x=reorder(site, distances, mean), y=distances, fill=groups))+
-  theme_classic()+ coord_flip()+
-  labs(color="Groups", x="Sites", y="Distance to centroid", title="Average Distance to Centroid")+
-  #scale_fill_manual(values= c("#942D0A", "#E65525"))+
-  scale_fill_manual(values= c("#043005","#4F9608"))+
-  stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")+
-  scale_x_discrete(expand = c(0,2))+
-  geom_segment(aes(x = 0,  xend = 0,y=3, yend=6), arrow = arrow(length = unit(0.5, "cm")))
-#######
+rf1 <- randomForest( ~ X1  + X2 + X3 , data=df) 
+df %>% mutate(pred = predict(rf1_forcing)) %>% ggplot(aes(pred, forcing)) + geom_point()
+Random Forest trial ####
+
+
+
