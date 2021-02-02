@@ -256,11 +256,6 @@ distance_matrix %>%
   theme_pca()+ coord_flip()+
   scale_fill_manual(values= c("#942D0A", "#E65525"), name = "Class", labels = c("Altered \nMEditerranean", "Natural \nMediterranean"))+labs(color="Groups", x="Sites", y="Distance to centroid", tag =c("(B)\nR^2=0.937"))+ theme(plot.tag.position=c(0.70,0.96))+
   stat_summary(aes(x=reorder(site, distances, mean), y=distances, fill=groups),fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red")
-<<<<<<< HEAD
-=======
-
-#Distance to centroid of Temperate sites
->>>>>>> d578d27ab27749c91ae2af9bf292b19f4b132310
 
 #Distance to centroid of Temperate sites
 distance_matrix %>% 
@@ -737,6 +732,17 @@ data_sum6 %>% mutate(pred = predict(rf1_forcing)) %>% ggplot(aes(pred, var_PC1))
 rf1 <- randomForest( ~ X1  + X2 + X3 , data=df) 
 df %>% mutate(pred = predict(rf1_forcing)) %>% ggplot(aes(pred, forcing)) + geom_point()
 Random Forest trial ####
+
+#### Final Plots ####
+#### Loading plots ####
+parafac_em <- read.csv("Em.csv")
+parafac_ex<- read.csv("Ex.csv")
+ggplot()+
+  geom_line(aes(x=parafac_em$Em,y=(1/3)*(parafac_em$Comp.8)))+
+  geom_line(aes(x=parafac_ex$Ex,y=3*(parafac_ex$Comp.8)), linetype = "dashed")+
+  theme_classic()+
+  labs(title="Comp8")
+
 
 
 
