@@ -329,42 +329,131 @@ plot_all <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 
 
 plot_points <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2.5, colour="black")+
-  scale_shape_manual(values=c(23,22,25,24))+
+  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2, colour="black")+
+  scale_shape_manual(values=c(23,22,25,24), labels= c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
   scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
-  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "b. Sites")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "A")+
   theme_pca()+ 
-  theme(plot.tag.position=c(0.15,0.97))+
+  theme(plot.tag.position=c(0.15,0.95))+
   scale_x_continuous(limits=c(-8,8), n.breaks=10)+
   scale_y_continuous(limits=c(-8,8), n.breaks=10)+
   guides(fill="legend")+
   theme(legend.position = c(-1,0))+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
+  theme(legend.title = element_blank(),legend.position = c(0.87,0.13))+
+  theme(text = element_text(size=14), axis.text =  element_text(size=14), legend.text = element_text(size=14))
+
+labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural")
 
 plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/3, "picas")),color = "black") +
   annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2+0.05),label = PCA_rot$Variables, size=3.5, color="black")+
-  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "c. Optical parameters")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "B")+
   theme_pca()+ 
-  theme(plot.tag.position=c(0.24,0.97))+
+  theme(plot.tag.position=c(0.20,0.95))+
   scale_x_continuous(limits=c(-1,1), n.breaks=10)+
   scale_y_continuous(limits=c(-1,1), n.breaks=10)+
   guides(fill="legend")+
   theme(legend.position = c(-1,0))+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
+  theme(text = element_text(size=11))
+
+x11()
+ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/3, "picas")),color = "black") +
+  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2+0.05),label = PCA_rot$Variables, size=3.5, color="black")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "B")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.20,0.95))+
+  scale_x_continuous(limits=c(-1,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1,1), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
+  theme(text = element_text(size=11))
+
+labels_locator <- ggmap::gglocator(n=16, mercator=F)
+
+print(labels_locator)
+
+var_names <-  PCA_rot$Variables %>%as_tibble 
+ var_names <- var_names[["value"]]%>% str_replace( "Comp", "C") %>% str_replace(pattern="HIX2",replacement ="HIX") %>%
+   #str_replace(pattern="beta.alpha",replacement = paste("$beta","/","$alpha")) %>%
+   str_replace(pattern="slope_short_Helms",replacement = "Short Slope") %>%
+   str_replace(pattern="SR_Loiselle",replacement = "Slope Ratio") %>%
+   str_replace(pattern="E2.to.E3",replacement = "E2:E3")%>%
+   str_replace(pattern="E4.to.E6",replacement = "E4:E6")
+ 
+ labels_locator <- matrix(c(
+   -0.99, 0.32, #1
+   -1.03 , 0.05, #2
+   -0.87 , 0.48, #3
+   -0.75  ,0.49, #4
+   -0.97  ,0.195,#5
+   -0.18  ,0.955, #6
+   0.08  ,0.948, #7
+   0.30  ,0.58, #8
+   -0.9 ,-0.04, #SUVA
+   0.44 , 0.564, #FIX
+   -0.79 ,-0.57, #HIX
+   0.70 , 0.72, #beta.alpha
+   0.09 ,-0.20, #Short slope
+   0.475  ,0.23, #slope ratio
+   -0.09  ,0.15, #E2toE3
+   -0.30 ,-0.07 #E4.to.E6
+ ), ncol=2, byrow=T)
+ 
+
+ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "black", lwd=0.7) +
+  annotate("text", x = labels_locator[,1], y = labels_locator[,2],label =var_names, size=5, color="black")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "B")+
+  theme_pca()+ 
+  theme(plot.tag.position=c(0.2,0.95))+
+  scale_x_continuous(limits=c(-1.12,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1.12,1), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
+  theme(text = element_text(size=14),axis.text=element_text(size=14))
+
 
 plot_LCOCD <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue") +
-  annotate("text", x = (LC_OCD_rot$PC1), y = (LC_OCD_rot$PC2), label = LC_OCD_rot$Variables, size=4, color="blue")+
-  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "d. LC-OCD parameters")+
+  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue", lwd=0.7) +
+  annotate("text", x = (LC_OCD_rot$PC1), y = (LC_OCD_rot$PC2), label = LC_OCD_rot$Variables, size=5, color="blue")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "C")+
   theme_pca()+  
-  theme(plot.tag.position=c(0.28,0.97))+ 
-  scale_x_continuous(limits=c(-1,1), n.breaks=10)+
-  scale_y_continuous(limits=c(-1,1), n.breaks=10)+
+  theme(plot.tag.position=c(0.20,0.95))+ 
+  scale_x_continuous(limits=c(-1.12,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1.12,1), n.breaks=10)+
   guides(fill="legend")+
   theme(legend.position = c(-1,0))+
   geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
 
+x11()
+labels_locator <- ggmap::gglocator(n=7, mercator=F)
+labels_locator <- matrix(c(
+   -0.77, -0.36, #SUVA_HS
+    -0.89, -0.25, #SUVA_ges
+     0.80,  0.29, #% HMWS C
+    -0.77,  0.14, #% HS_C
+     0.18,  0.42, #% LMWS_C
+     0.59, 0, #HMWS (C:N)
+    -0.14, -0.20 #humic (C:N)
+   ), ncol=2, byrow=T)
+
+ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
+  geom_segment(data = LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue", lwd=0.7) +
+  annotate("text", x =labels_locator[,1], y = labels_locator[,2], label = LC_OCD_rot$Variables, size=5, color="blue")+
+  labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "C")+
+  theme_pca()+  
+  theme(plot.tag.position=c(0.20,0.95))+ 
+  scale_x_continuous(limits=c(-1.12,1), n.breaks=10)+
+  scale_y_continuous(limits=c(-1.12,1), n.breaks=10)+
+  guides(fill="legend")+
+  theme(legend.position = c(-1,0))+
+  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
+  theme(text = element_text(size=14),axis.text=element_text(size=14))
 
 #### end ####
 # Treating the Lc-OCD data as new data and do a PCA on that so that later on you can do a procrustes anaylsis
