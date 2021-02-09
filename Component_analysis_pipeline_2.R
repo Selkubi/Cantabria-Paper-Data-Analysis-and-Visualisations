@@ -197,36 +197,82 @@ ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 
 # component loadings comparison boxplots
 
-par(mfrow=c(2,2),mai=c(0.3,0.3,0.3,0.3))
+par(mfrow=c(2,2),mai=c(0.5,0.5,0.3,0.3))
 
-plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
+plot_TempAlt <- plot(wine.pca$x[,c(1,2)], type="n",  ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25) #main = "Altered Atlantic",
 ordi_TempAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[1]]$site,
                          alpha=150, col=c('#043005'))
+text(x=-4.4, y=5.5, labels="A", cex=1.7)
 
-plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Temperate", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
+plot_TempNat <- plot(wine.pca$x[,c(1,2)], type="n", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25) #, main = "Natural Atlantic"
 ordi_TempNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[2]]$site,
                          alpha=150, col=c("#4F9608"))
+text(x=-4.4, y=5.5, labels="B", cex=1.7)
 
-plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", main = "Altered Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
+plot_MedAlt <- plot(wine.pca$x[,c(1,2)], type="n", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25) #, main = "Altered Mediterranean"
 ordi_MedAlt <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[3]]$site,
                         alpha=150, col=c("#942D0A"))
+text(x=-4.4, y=5.5, labels="C", cex=1.7)
 
-plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", main = "Natural Mediterranean", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25)
+plot_MedNat <- plot(wine.pca$x[,c(1,2)], type="n", ylim=c(-5,6), xlim=c(-5,6), cex.main=1.5, cex.axis=1.25) # main = "Natural Mediterranean",
 ordi_MedNat <- ordihull(ord=wine.pca$x[,c(1,2)],groups=data_sum$site ,display="sites",draw="polygon", label=F, show.groups = group_list[[4]]$site,
                         alpha=150, col=c('#E65525'))
+text(x=-4.4, y=5.5, labels="D", cex=1.7)
 
 par(mfrow=c(1,1))
 
 #### Anova with betadisper(vegadist) ####
-betas <- vegdist(wine.pca$x[,2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+betas_PC1 <- vegdist(wine.pca$x[,1],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
+
+disp_PC1 <- betas_PC1[["distances"]] %>%
+  tapply(BDOC_normalised_components$site, mean) %>%
+  as_tibble(rownames="site") %>% cbind(PC=c("PC1")) %>% 
+  left_join(site_info, by=("site"="site"))
+
+betas_PC2 <- vegdist(wine.pca$x[,2],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+  betadisper(group = BDOC_normalised_components$site) 
+
+disp_PC2 <-betas_PC2[["distances"]] %>%
+  tapply(BDOC_normalised_components$site, mean) %>%
+  as_tibble(rownames="site")%>% cbind(PC=c("PC2")) %>% 
+  left_join(site_info, by=("site"="site"))
+
+
+betas_rest <- vegdist(wine.pca$x[,3:16],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+  betadisper(group = BDOC_normalised_components$site) 
+
+disp_rest <- betas_rest[["distances"]] %>%
+  tapply(BDOC_normalised_components$site, mean) %>%
+  as_tibble(rownames="site")%>% cbind(PC=c("PC3-PC16")) %>% 
+  left_join(site_info, by=("site"="site"))
+
+disp_all <- rbind(disp_PC1, disp_PC2, disp_rest)%>% select("site", "value", "PC","groups", "Class", "alteration")
+
+
+ggplot(data = disp_all, aes(x=groups, y=value, fill=PC)) + 
+  geom_boxplot()+facet_wrap(~PC, scale="free_x")+labs(y="Dispersion", x=NULL)+
+  aes(fill=groups)+scale_fill_manual(values =c('#942D0A','#E65525', '#043005',"#4F9608"), labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
+  theme_bw()+theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "AM","MedNat" = "NM",
+                                                                                                        "TempAlt" = "AA", "TempNat" = "NA"))+
+  theme(panel.background = element_rect(fill = NA), strip.background.x = element_rect(fill="white"), strip.text = element_text(size = 14), axis.title = element_text(size=14))+
+  theme(text = element_text(size=14),axis.text=element_text(size=14), legend.text = element_text(size=13))
+
+
+
+
+betas <- vegdist(wine.pca$x[,1:16],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+  betadisper(group = BDOC_normalised_components$site) 
+
 disp <- betas[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
-  as_tibble(rownames="site")
+  as_tibble(rownames="site")%>% cbind(PC=c("all")) %>% 
+  left_join(site_info, by=("site"="site"))
+
 
 par(mfrow=c(1,1),mai=c(0.6,0.5,0.3,0.3), mex=1.5)
 boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
-        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), names=c("Altered \nMediterr.", "Natural\nMediterr.", "Altered \nTemperate", "Natural \nTemperate"))
+        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), names=c("Altered \nMediterr.", "Natural\nMediterr.", "Altered \nAtlantic", "Natural \nAtlantic"))
 text(x=4.4, y=3.1, labels="(C)")
 
 
@@ -240,7 +286,10 @@ disp<-left_join(disp, as_tibble(unique_data), by=c("site"="site"))
 disp_med<-disp[str_sub(disp$groups, 1,3) == "Med",]
 disp_temp<-disp[str_sub(disp$groups, 1,3) =="Tem",]
 
-anova(lm(disp_med[["value"]]~factor(disp_med$groups)))
+#var <- tapply(wine.pca$x[,1], BDOC_normalised_components$site, FUN=var)
+#plot(disp$value~var)
+
+anova(lm(disp_med[["value"]]~factor(disp_med$groups])))
 anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
 
 # Average centroid distance boxplots 
@@ -330,24 +379,22 @@ plot_all <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 
 plot_points <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2, colour="black")+
-  scale_shape_manual(values=c(23,22,25,24), labels= c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
-  scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"))+
+  scale_shape_manual(values=c(23,22,25,24), labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
+  scale_fill_manual(values=c("#E65525", "#942D0A", "#043005","#4F9608"), labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
   labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "A")+
   theme_pca()+ 
   theme(plot.tag.position=c(0.15,0.95))+
   scale_x_continuous(limits=c(-8,8), n.breaks=10)+
   scale_y_continuous(limits=c(-8,8), n.breaks=10)+
-  guides(fill="legend")+
-  theme(legend.position = c(-1,0))+
   geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
-  theme(legend.title = element_blank(),legend.position = c(0.87,0.13))+
+  theme(legend.title = element_blank(),legend.position = c(0.24,0.13))+
   theme(text = element_text(size=14), axis.text =  element_text(size=14), legend.text = element_text(size=14))
 
-labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural")
+
 
 plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/3, "picas")),color = "black") +
-  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2+0.05),label = PCA_rot$Variables, size=3.5, color="black")+
+  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2),label = PCA_rot$Variables, size=3.5, color="black")+
   labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "B")+
   theme_pca()+ 
   theme(plot.tag.position=c(0.20,0.95))+
@@ -361,7 +408,7 @@ plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
 x11()
 ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/3, "picas")),color = "black") +
-  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2+0.05),label = PCA_rot$Variables, size=3.5, color="black")+
+  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2),label = PCA_rot$Variables, size=3.5, color="black")+
   labs(color="Sites", x="PC1 (34.8%)", y="PC2 (20.1%)", tag = "B")+
   theme_pca()+ 
   theme(plot.tag.position=c(0.20,0.95))+
