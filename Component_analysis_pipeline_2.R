@@ -239,41 +239,27 @@ disp_PC2 <-betas_PC2[["distances"]] %>%
   left_join(site_info, by=("site"="site"))
 
 
-betas_rest <- vegdist(wine.pca$x[,3:16],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
+betas_all <- vegdist(wine.pca$x[,1:16],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
   betadisper(group = BDOC_normalised_components$site) 
 
-disp_rest <- betas_rest[["distances"]] %>%
+disp_all <- betas_all[["distances"]] %>%
   tapply(BDOC_normalised_components$site, mean) %>%
-  as_tibble(rownames="site")%>% cbind(PC=c("PC3-PC16")) %>% 
+  as_tibble(rownames="site")%>% cbind(PC=c("PC1-PC16")) %>% 
   left_join(site_info, by=("site"="site"))
 
-disp_all <- rbind(disp_PC1, disp_PC2, disp_rest)%>% select("site", "value", "PC","groups", "Class", "alteration")
+disp_all <- rbind(disp_PC1, disp_PC2, disp_all)%>% select("site", "value", "PC","groups", "Class", "alteration")
+
+disp_all[["PC"]] <- factor(disp_all[["PC"]], levels=c("PC1", "PC2", "PC1-PC16"))
 
 
-ggplot(data = disp_all, aes(x=groups, y=value, fill=PC)) + 
-  geom_boxplot()+facet_wrap(~PC, scale="free_x")+labs(y="Dispersion", x=NULL)+
-  aes(fill=groups)+scale_fill_manual(values =c('#942D0A','#E65525', '#043005',"#4F9608"), labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
+pl = ggplot(data = disp_all, aes(x=groups, y=value, fill=groups)) + 
+  geom_boxplot()+facet_wrap(~PC)+
+  labs(y="Dispersion", x=NULL)+
+  scale_fill_manual(values =c('#942D0A','#E65525', '#043005',"#4F9608"), labels = c("Mediterranean Altered", "Mediterranean Natural", "Atlantic Altered", "Atlantic Natural"))+
   theme_bw()+theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "AM","MedNat" = "NM",
                                                                                                         "TempAlt" = "AA", "TempNat" = "NA"))+
   theme(panel.background = element_rect(fill = NA), strip.background.x = element_rect(fill="white"), strip.text = element_text(size = 14), axis.title = element_text(size=14))+
   theme(text = element_text(size=14),axis.text=element_text(size=14), legend.text = element_text(size=13))
-
-
-
-
-betas <- vegdist(wine.pca$x[,1:16],method="euclidean") %>% #if you want to do only PC1 and 2, indicate as such here
-  betadisper(group = BDOC_normalised_components$site) 
-
-disp <- betas[["distances"]] %>%
-  tapply(BDOC_normalised_components$site, mean) %>%
-  as_tibble(rownames="site")%>% cbind(PC=c("all")) %>% 
-  left_join(site_info, by=("site"="site"))
-
-
-par(mfrow=c(1,1),mai=c(0.6,0.5,0.3,0.3), mex=1.5)
-boxplot(disp[["value"]]~BDOC_normalised_components$groups.x[match(disp[[1]],BDOC_normalised_components$site)], 
-        xlab=NULL, ylab = "Dispersion of PCA axis", col=c('#942D0A','#E65525', '#043005', "#4F9608"), names=c("Altered \nMediterr.", "Natural\nMediterr.", "Altered \nAtlantic", "Natural \nAtlantic"))
-text(x=4.4, y=3.1, labels="(C)")
 
 
 #png('Seasonal quality boxplot of variance across sites')
@@ -281,16 +267,34 @@ text(x=4.4, y=3.1, labels="(C)")
 #dev.off()
 boxplot(betas, ylim=c(0,8))
 unique_data<-site_info[,c("site", "groups")]
-disp<-left_join(disp, as_tibble(unique_data), by=c("site"="site"))
 
-disp_med<-disp[str_sub(disp$groups, 1,3) == "Med",]
-disp_temp<-disp[str_sub(disp$groups, 1,3) =="Tem",]
+create_label = function(dat) {
+  res = car::Anova(lm(value~factor(groups), data = dat), type=2)[1,3:4]
+  paste0('F = ', round(res[1], 2), ', p = ',round(res[2], 2))
+}
+
+f_extr = by(disp_all, INDICES = disp_all[,c('PC')], function(x) {
+  paste(c('M: ', 'T: '), by(x , INDICES = x[,c('Class')], create_label, simplify = TRUE), sep='', collapse='\n')
+}, simplify = FALSE)
+
+f_extr = data.frame(
+  lab = unlist(f_extr), 
+  x = rep(2, 3), 
+  y = c(4, 4, 1.5), 
+  PC = unique(disp_all$PC))
+f_extr$lab[3] = sub('(.+)= 0$', '\\1< 0.001', f_extr$lab[3])
+
+
+pl + geom_text(data = f_extr, mapping = aes(x = x, y = y, label = lab, fill=NA))
+
 
 #var <- tapply(wine.pca$x[,1], BDOC_normalised_components$site, FUN=var)
 #plot(disp$value~var)
 
-anova(lm(disp_med[["value"]]~factor(disp_med$groups])))
-anova(lm(disp_temp[["value"]]~factor(disp_temp$groups)))
+car::Anova(lm(disp_med[["value"]]~factor(disp_med[["groups"]])), type=2)
+car::Anova(lm(disp_temp[["value"]]~factor(disp_temp[["groups"]])), type=3)
+
+anova(lm(disp_temp[["value"]]~factor(disp_temp$groups.x)))
 
 # Average centroid distance boxplots 
 #Distance to centroid of MEditerranean sites
@@ -544,17 +548,25 @@ for(i in 1:nrow(data_sum4)){
   } else if (data_sum4[["campaign"]][[i]] == "dec"){
     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("13/12/2017"))
   } else if (data_sum4[["campaign"]][[i]] == "feb"){
-    data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("14/02/2018"))
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("14/02/2018"))
   } else if (data_sum4[["campaign"]][[i]] == "may"){
-    data_sum4[["exact_date"]][[i]] <-  as.character.Date(dmy("13/06/2018"))
+    data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("13/06/2018"))
   } else if (data_sum4[["campaign"]][[i]] == "aug") {
     data_sum4[["exact_date"]][[i]] <- as.character.Date(dmy("14/08/2018"))
   } else {data_sum4[["exact_date"]][[i]] <- (0)}
 }
 
+
+
 data_sum4[["exact_date"]] <- as.Date(unlist(data_sum4[["exact_date"]]))
 data_sum4 <- data_sum4 %>% as_tibble()
 data_sum4 <- left_join(data_sum4, site_info, by=c("site"="site"))
+
+aggregate(cbind(PC1,PC2) ~ site, data = data_sum4, FUN = mean)
+aggregate(cbind(PC1,PC2) ~ site+Catchment, data = data_sum4, FUN = var)
+
+temp = data.table(data_sum4)
+temp[, .(mean1 = mean(PC1), mean2 = mean(PC2), v1 = var(PC1), v2 = var(PC2)), by = .(site, Catchment)]
 
 data_sum5 <- data_sum4 %>%
   group_by(site) %>%
