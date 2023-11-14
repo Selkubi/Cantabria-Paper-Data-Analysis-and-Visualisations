@@ -1,0 +1,363 @@
+#### PLSR trial ####
+library(pls)
+library(plsVarSel)
+library(mdatools)
+library(data.table)
+library(ggplot2)
+
+source("Component_analysis_pipeline_paper_3.R")
+
+#### Hydrological Indices Analysis ####
+magnitude_ind <- read.csv("Hydra_Hydro_Ind_subs_group1.csv")
+magnitude_duration_extreme_ind <- read.csv("Hydra_Hydro_Ind_subs_group2.csv")
+timing_extreme_ind <- read.csv("Hydra_Hydro_Ind_subs_group3.csv")
+freq_duration_pulses_ind <- read.csv("Hydra_Hydro_Ind_subs_group4.csv")
+rate_freq_ind <- read.csv("Hydra_Hydro_Ind_subs_group5.csv")
+
+meta_indices <- as.data.table(Reduce(function(x,y) merge(x=x, y=y, by="Stream"), x = list(magnitude_ind, magnitude_duration_extreme_ind, 
+                                                                                     timing_extreme_ind,freq_duration_pulses_ind,rate_freq_ind)))
+site_info <- as.data.table(read.csv("site_summary.csv"))
+site_info <- site_info[site_info$site!="Carrion",]
+meta_indices <- meta_indices[Stream!="Carrion"]  
+
+#Flow indice PCA
+pca_data2 <- merge(meta_indices, site_info, by.x = "Stream", by.y = "site")
+wine.pca2 <- prcomp(pca_data2[, -c(1,87:95)], scale. = TRUE) 
+summary(wine.pca2)
+screeplot(wine.pca2)
+
+### PCA plots #### 
+PCA_scores <- data.table(wine.pca2$x[,1:2],  pca_data2[,c("Stream", "Class", "alteration", "groups")])
+MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
+MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
+TempAlt <- PCA_scores[PCA_scores$groups == "TempAlt", ][chull(PCA_scores[PCA_scores$groups == "TempAlt", c("PC1", "PC2")]), ]  # hull values for grp A
+TempNat <- PCA_scores[PCA_scores$groups == "TempNat", ][chull(PCA_scores[PCA_scores$groups == "TempNat", c("PC1", "PC2")]), ]  # hull values for grp A
+
+hull.data <- rbind(MedAlt, MedNat,TempAlt,TempNat)
+hull.data$groups <- factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+pca_data2$groups <- factor(pca_data2$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+
+PCAloadings <- data.frame(Variables = rownames(wine.pca2$rotation), wine.pca2$rotation)
+PCAloadings$Variables <- c("l2","lcv","lca","lkur", "M1","M2","M3", "M4" ,"M5" , "M6", "M7","M8" ,"M9" ,"M10" , "M11" ,"M12", "sdM1", "sdM2", "sdM3" , "sdM4", "sdM5", "sdM6","sdM7" , "sdM8" , "sdM9", "sdM10",      
+                        "sdM11","sdM12","X5", "X25","X75", "X95","1LF", "1HF","3LF","3HF", "7LF","7HF", "30LF","30HF", "90LF","90HF", "sd1LF","sd1HF", "sd3LF", "sd3HF", "sd7LF","sd7HF","sd30LF","sd30HF","sd90LF","sd90HF" ,    
+                        "ZFD","BFI", "sdZFD","sdBFI","JMin","JMAx", "sdJMIn","sdJMax","Pred","FRE1","FRE3","FRE7","sdFRE1", "sdFRE3","sdFRE7","nPLow","dPLow","nPHigh","dPHigh", "sdnPLow", "sddPLow", "sdnHigh","sddPHigh","nPos","Pos", "nNeg",       
+                        "Neg","sdnPos","sdPos","sdnNeg","sdNeg","Rev","sdReversals")
+
+pca.scores<-wine.pca2$x
+eigenvec12<-cbind(wine.pca2$rotation[,1],wine.pca2$rotation[,2])
+PCAloadings<-data.frame(cor(pca_data2[,-c(1,87:95)],pca.scores))
+PCAloadings$Variables <- rownames(PCAloadings)
+
+theme_pca <- theme_bw() +
+  theme(
+    text = element_text(size=11),
+    axis.title = element_text(size=11),
+    axis.text = element_text(size=11, color="black"), 
+    legend.position = "none", 
+    strip.placement ="outside", 
+    strip.background = element_blank(), 
+    strip.text = element_blank(),
+    axis.line =  element_line(color="black"),
+    panel.border = element_blank(),
+    axis.line.y.right = element_line(color="white"),
+    panel.grid = element_blank())
+
+
+
+Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) +
+  #geom_point(aes(fill=pca_data2$groups, shape=pca_data2$groups),  size=2.5, colour="black") +
+  geom_polygon(data = hull.data, mapping = aes(x=PC1,y=PC2,fill = groups, group = groups), alpha = 0.9) +
+  #geom_segment(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1)*0.9,
+  #                         yend = (PC2)*0.9), arrow = arrow(length = unit(1, "picas")),color = "black") +
+  geom_text(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = (PCAloadings[!startsWith(PCAloadings$Variables, "sd"),]$PC1 * 10), y = (PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10)),
+            label = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ]$Variables,
+            position = position_jitter(1,1)) +
+  theme_pca +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
+  theme(legend.title = element_blank(), legend.position = "none") +
+  labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
+  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2)+xlim(-10, 10) + ylim(-10, 10)
+
+pdf('plots/Indice_PCA1.pdf', width = 5, height = 5)
+plot(Indice_PCA1)
+dev.off()
+
+ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
+  geom_text(data = PCAloadings, aes(x = (PCAloadings[,"PC1"]), y = (PCAloadings[, "PC2"])),
+            label = PCAloadings$Variables)+
+  theme_classic() +
+  theme(legend.title=element_blank(), legend.position = "none") +
+  labs(color = "Sites", x = "PC 1", y = "PC 2", title = "Principal Component Analysis of Flow Indices") +
+  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2)
+
+
+Indice_PCA2 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
+  #geom_point(aes(fill=pca_data2$groups, shape=pca_data2$groups),  size=2.5, colour = "black") +
+  geom_polygon(data = hull.data, mapping=aes(x = PC1, y = PC2, fill = groups, group = groups),alpha = 0.9) +
+  #geom_segment(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"),], aes(x = 0, y = 0, xend = (PC1)*0.9,
+  #                         yend = (PC2)*0.9), arrow = arrow(length = unit(1, "picas")),color = "black") +
+  geom_text(data = PCAloadings[startsWith(PCAloadings$Variables, "sd"), ], aes(x = (PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10)),
+            label = PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$Variables) +
+  # geom_jitter(aes( x = 2, y = 2)) +
+  theme_classic() +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
+  theme(legend.title = element_blank(), legend.position = "none") +
+  labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
+  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10,10) + ylim(-10,10)
+
+pdf('plots/Indice_PCA2.pdf', width = 5, height = 5)
+plot(Indice_PCA2)
+dev.off()
+
+#### The indice bpxplots selected from the previous PCA analyiss ####
+data <- pca_data2[, c("Stream", "groups", "alteration","Class",  "nPLow", "dPLow", "nPHigh", "dPHigh")]
+ggplot() +
+  geom_point(data = data, aes(x = Stream, y = nPLow, col = groups), size = 8)
+
+melted_data = melt(data, id.vars = c("Stream", "groups", "alteration", "Class"), measure.vars = c("nPLow", "dPLow", "nPHigh", "dPHigh"))
+melted_data$groups = factor(melted_data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+
+hydro_indices <- ggplot(melted_data)+
+  geom_boxplot(aes(x = groups, y = value, fill = groups), width = 0.5)+
+  facet_wrap(~variable, scales = "free", strip.position = "left", labeller = as_labeller(c(nPLow="Low Flow Event Count", dPLow = "Low Flow Event Duration", 
+                                                                                     nPHigh = "High Flow Event Count", dPHigh = "High Flow Event Duration"))) +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
+  theme(axis.line.x = element_line(color = "black"),axis.line.y =  element_line(color = "black"), panel.grid = element_blank(), panel.background = element_blank()) +
+  theme(legend.position = "none") + ylab("7-Day Maximum Flows (7HF)") +
+  scale_x_discrete(limits = c( "TempNat","TempAlt", "MedNat", "MedAlt"),
+                   labels = c("nA", "aA", "nM", "aM")) +
+  theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement ="outside", 
+        strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
+  
+pdf('plots/Indice_boxplots.pdf', width = 5, height = 5)
+plot(hydro_indices)
+dev.off()
+
+data2 <- pca_data2[, c("Stream", "groups", "alteration","Class", "FRE1", "FRE3", "FRE7")]
+melted_data2 = melt(data2, id.vars = c("Stream", "groups", "alteration", "Class"), measure.vars = c("FRE1", "FRE3", "FRE7"))
+melted_data2$groups = factor(melted_data2$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+
+fre_indice <- ggplot(melted_data2)+
+  geom_boxplot(aes(x = groups, y = value, fill = groups), width = 0.5)+
+  facet_wrap(~variable, scales = "free", strip.position = "left", labeller = as_labeller(c(FRE1 = "Frequency of 1-Day Events", 
+                                                                                           FRE3 = "Frequency of 3-Day Events", 
+                                                                                           FRE7 = "Frequency of 7-Day Events"))) +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
+  theme(axis.line.x = element_line(color = "black"),axis.line.y =  element_line(color = "black"), panel.grid = element_blank(), panel.background = element_blank()) +
+  theme(legend.position = "none") +
+  scale_x_discrete(limits = c( "TempNat","TempAlt", "MedNat", "MedAlt"),
+                   labels = c("nA", "aA", "nM", "aM")) +
+  theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement ="outside", 
+        strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
+
+pdf('plots/fre_indice_boxplots.pdf', width = 6, height = 1.5)
+plot(fre_indice)
+dev.off()
+
+
+#### End of indice boxplots
+
+#### Statistical tests on the indices ####
+
+shapiro.test((data$X95))
+hist(data$sd7HF)
+boxplot(data$sd7HF)
+
+bartlett.test((X95)~groups, data = data)
+oneway.test((X95)~groups, var.equal = F, data = data)
+
+var.test(( X95)~alteration, data=data[Class == "Mediterranean"])
+t.test(( X95)~alteration, data=data[Class == "Mediterranean"], var.equal = T)
+
+var.test(( X95)~alteration, data=data[Class == "Temperate"])
+t.test(( X95)~alteration, data=data[Class == "Temperate"], var.equal = T)
+
+var.test(( X95)~Class, data = data[alteration == "Natural"])
+t.test(( X95)~Class, data = data[alteration == "Natural"], var.equal = F)
+
+p.adjust(c( 0.001737,  0.4524,   0.603), method="bonferroni", n = 3)
+
+m = pairwise.t.test((data$sdJMIn), data$groups, p.adjust.method = "bonferroni", pool.sd = F)
+multcompView::multcompLetters(m$p.value)
+### End of Statistical tests
+
+
+#### PLSR model ####
+# get VIP scores and reg coeffs
+
+data = merge(data.table(pca_data, wine.pca$x[, 1:2]), meta_indices ,by.y = "Stream", by.x = "site")
+data = merge(unique(data[, c(1, 3:5, 19:103)]), PC_info, by = c("site", "Class", "alteration"))
+
+model_varPC1 = plsr(var_PC1~., data = data[, -c("site", "Class", "alteration", "groups.x", "mean_PC1", "mean_PC2", "var_PC2", "groups")], 
+                  scale = T, validation = "CV")
+summary(model_varPC1)
+
+model_varPC2 = plsr(var_PC2~., data = data[, -c("site", "Class", "alteration", "groups.x", "mean_PC1", "mean_PC2", "var_PC1", "groups")], scale = T, validation = "CV")
+summary(model_varPC2)
+
+data = merge(disp_all, meta_indices ,by.y = "Stream", by.x = "site")
+
+model_dispPC_all = plsr(disp_PC_all~., data = data[, -c("site", "Class", "alteration", "groups.x")], scale = T, validation = "CV")
+summary(model_dispPC_all)
+
+
+VIP_PC1 = plsVarSel::VIP(pls.object = model_varPC1, opt.comp = 1, p = dim(model_varPC1$coef)[1])
+RC_PC1 = (model_varPC1[["coefficients"]][, , 1])
+VIP_PC2 = plsVarSel::VIP(pls.object=model_varPC2, opt.comp = 1, p = dim(model_varPC2$coef)[1])
+RC_PC2 = (model_varPC2[["coefficients"]][, , 1])
+VIP_PC_all = plsVarSel::VIP(pls.object=model_dispPC_all, opt.comp = 1, p=dim(model_dispPC_all$coef)[1])
+RC_PC_all = (model_dispPC_all[["coefficients"]][, , 1])
+
+rc_values = data.table(cbind(VIP_PC1, RC_PC1,VIP_PC2, RC_PC2, VIP_PC_all, RC_PC_all), keep.rownames = "index")
+write.table(rc_values, file = "Regression_Coefficient_results.txt", sep=";", row.names = TRUE)
+
+#### PLSR plot 1 ####
+
+for (i in 1:length(rc_values$index)){
+  
+  if (length(grep(rc_values$index[[i]],  colnames(magnitude_ind))) > 0){
+    rc_values$groups[[i]] = c("Magnitude of Annual and Monthly Flows")
+  } else if (length(grep(rc_values$index[[i]],  colnames(magnitude_duration_extreme_ind))) > 0)
+    rc_values$groups[[i]] = c("Magnitude and Duration of Annual Extremes")
+  else if (length(grep(rc_values$index[[i]],  colnames(timing_extreme_ind))) > 0)
+    rc_values$groups[[i]] = c("Timing of Extreme Flow Events")
+  else if (length(grep(rc_values$index[[i]],  colnames(freq_duration_pulses_ind))) > 0)
+    rc_values$groups[[i]] = c("Frequency and Duration of High and Low Flow Pulses")
+  else if (length(grep(rc_values$index[[i]],  colnames(rate_freq_ind))) > 0)
+    rc_values$groups[[i]] = c("Rate and Frequency of Flow Changes")
+  else  {rc_values$groups[[i]] = "NA"}
+  
+}
+rc_values$groups = factor(rc_values$groups, levels = c("Magnitude of Annual and Monthly Flows", "Magnitude and Duration of Annual Extremes", "Timing of Extreme Flow Events",
+                                                   "Frequency and Duration of High and Low Flow Pulses", "Rate and Frequency of Flow Changes"))
+
+rc_values$index = factor(rc_values$index, levels = c("M1","M2","M3", "M4" ,"M5" , "M6", "M7","M8" ,"M9" ,"M10" , "M11" ,"M12", "sdM1", "sdM2", "sdM3" , "sdM4", "sdM5", "sdM6","sdM7" , "sdM8" , "sdM9", "sdM10",      
+                                                   "sdM11","sdM12","l2","lcv","lca","lkur","X5", "X25","X75", "X95","X1LF", "X1HF","X3LF","X3HF", "X7LF","X7HF", "X30LF","X30HF", "X90LF","X90HF", "sd1LF","sd1HF", "sd3LF", "sd3HF", "sd7LF","sd7HF","sd30LF","sd30HF","sd90LF","sd90HF" ,    
+                                                   "ZFD","BFI", "sdZFD","sdBFI","JMin","JMAx", "sdJMIn","sdJMax","Pred","FRE1","FRE3","FRE7","sdFRE1", "sdFRE3","sdFRE7","nPLow","dPLow","nPHigh","dPHigh", "sdnPLow", "sddPLow", "sdnHigh","sddPHigh","nPos","Pos", "nNeg",       
+                                                   "Neg","sdnPos","sdPos","sdnNeg","sdNeg","Rev","sdReversals"), 
+                       labels = c("January Flow","February Flow","March Flow", "April Flow" ,"May Flow" , "June Flow", "July Flow","August Flow" ,"September Flow" ,"October Flow" , "November Flow" ,"December Flow", 
+                                  "January Flow SD ", "February Flow SD", "March Flow SD" , "April Flow SD", "May Flow SD", "June Flow SD","July Flow SD" , "August Flow SD" , "September Flow SD", "October Flow SD", "November Flow SD","December Flow SD",
+                                  "Variance of the flow duration curve","Coefficient of variation of the flow duration curve",
+                                  "Skewness of the flow duration curve","Kurtosis of the flow duration curve", 
+                                  "High 5% Exceedence Flows", "High 25% Exceedence Flows","Low 75% Exceedence Flows", "Low 95% Exceedence Flows",
+                                  "1-Day Minimum", "1-Day Maximum","3-Day Minimum","3-Day Maximum", "7-Day Minimum","7-Day Maximum", "30-Day Minimum","30-Day Maximum", "90-Day Minimum","90-Day Maximum", 
+                                  "1-Day Minimum SD","1-Day Maximum SD", "3-Day Minimum SD", "3-Day Maximum SD", "7-Day Minimum SD","7-Day Maximum SD","30-Day Minimum SD","30-Day Maximum SD","90-Day Minimum SD","90-Day Maximum SD" ,    
+                                  "Zero Flow Days","Base FLow Index", "Zero Flow Days SD","Base FLow Index SD","Date of Annual Minimum Flow","Date of Annual Maximum Flow", "Date of Annual Minimum Flow SD","Date of Annual Maximum Flow SD","Predictability",
+                                  "1-Day Flood Frequency","3-Day Flood Frequency","7-Day Flood Frequency","1-Day Flood Frequency SD", "3-Day Flood Frequency SD","7-Day Flood Frequency SD",
+                                  "Low Pulse Count","Low Pulse Duration","High Pulse Count","High Pulse Duration", "Low Pulse Count SD", "Low Pulse Duration SD", "High Pulse Count SD","High Pulse Duration SD",
+                                  "No Increasing Flow Days","Rise Rate", "No Decreasing Flow Days",  "Fall Rate","No Increasing Flow Days SD","Rise Rate SD","No Decreasing Flow Days SD","Fall Rate SD","Reversal Count","Reversal Count SD"), )
+ggplot(rc_values[VIP_PC1 > 1]) +
+  geom_col(aes(x = index, y = RC_PC1, fill = VIP_PC1)) + theme_bw() +
+  theme(text = element_text(size = 16),axis.text = element_text(size=15, color="black"), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_text(size = 15), legend.position = "top")+ylab("Regression Coefficient") +
+  scale_fill_distiller(palette = "Greys", direction = 1, limits = c(0.5, 2.5), breaks = c(1, 2.5))
+
+
+ggplot(rc_values[VIP_PC2 > 1]) +
+  geom_col(aes(x = index, y=RC_PC2, fill=VIP_PC2))+theme_bw()+
+  theme(text = element_text(size=16),axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
+        axis.title=element_text(size=15), legend.position = "top")+ylab("Regression Coefficient")+
+  scale_fill_distiller(palette="Greys", direction=1, limits= c(0.5, 2.5), breaks=c(1,2.5))
+
+ggplot(rc_values[VIP_PC_all>1])+
+  geom_col(aes(x=index, y=RC_PC_all, fill=VIP_PC_all))+theme_bw()+
+  theme(text = element_text(size=16),axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
+        axis.title=element_text(size=15), legend.position = "top")+ylab("Regression Coefficient")+
+  scale_fill_distiller(palette="Greys", direction=1,  limits= c(0.5, 2.5), breaks=c(1,2.5))
+
+#### end of plsr model plot 1
+
+#### PLSR model plot 2 ####
+  
+melted_VIP <- rbind(melt(data.table(cbind("VIP"=VIP_PC1, RC_PC1), keep.rownames = "index"), id.vars = c("index", "VIP")), 
+                 melt(data.table(cbind("VIP"=VIP_PC2, RC_PC2), keep.rownames = "index"), id.vars = c("index", "VIP")),
+                 melt(data.table(cbind("VIP"=VIP_PC_all, RC_PC_all), keep.rownames = "index"), id.vars = c("index", "VIP")))  
+
+
+for (i in 1:length(melted_VIP$index)){
+  
+  if (length(grep(melted_VIP$index[[i]],  colnames(magnitude_ind)))>0){
+    melted_VIP$groups[[i]]=c("Magnitude of Annual and Monthly Flows")
+  } 
+  else if (length(grep(melted_VIP$index[[i]],  colnames(magnitude_duration_extreme_ind)))>0){
+    melted_VIP$groups[[i]]=c("Magnitude and Duration of Annual Extremes")}
+  
+  else if (length(grep(melted_VIP$index[[i]],  colnames(timing_extreme_ind)))>0){
+    melted_VIP$groups[[i]]=c("Timing of Extreme Flow Events")}
+  
+  else if (length(grep(melted_VIP$index[[i]],  colnames(freq_duration_pulses_ind)))>0){
+    melted_VIP$groups[[i]]=c("Frequency and Duration of High and Low Flow Pulses ")
+  }
+  else if (length(grep(melted_VIP$index[[i]],  colnames(rate_freq_ind)))>0){
+    melted_VIP$groups[[i]]=c("Rate and frequency of flow changes ")}
+  
+  else  {melted_VIP$groups[[i]]="NA"}
+  
+}
+
+melted_VIP$index <- factor(melted_VIP$index, levels = c("M1","M2","M3", "M4" ,"M5" , "M6", "M7","M8" ,"M9" ,"M10" , "M11" ,"M12", "sdM1", "sdM2", "sdM3" , "sdM4", "sdM5", "sdM6","sdM7" , "sdM8" , "sdM9", "sdM10",      
+                                                   "sdM11","sdM12","l2","lcv","lca","lkur","X5", "X25","X75", "X95","X1LF", "X1HF","X3LF","X3HF", "X7LF","X7HF", "X30LF","X30HF", "X90LF","X90HF", "sd1LF","sd1HF", "sd3LF", "sd3HF", "sd7LF","sd7HF","sd30LF","sd30HF","sd90LF","sd90HF" ,    
+                                                   "ZFD","BFI", "sdZFD","sdBFI","JMin","JMAx", "sdJMIn","sdJMax","Pred","FRE1","FRE3","FRE7","sdFRE1", "sdFRE3","sdFRE7","nPLow","dPLow","nPHigh","dPHigh", "sdnPLow", "sddPLow", "sdnHigh","sddPHigh","nPos","Pos", "nNeg",       
+                                                   "Neg","sdnPos","sdPos","sdnNeg","sdNeg","Rev","sdReversals"), 
+                       labels = c("January Flow","February Flow","March Flow", "April Flow" ,"May Flow" , "June Flow", "July Flow","August Flow" ,"September Flow" ,"October Flow" , "November Flow" ,"December Flow", 
+                                  "January Flow SD ", "February Flow SD", "March Flow SD" , "April Flow SD", "May Flow SD", "June Flow SD","July Flow SD" , "August Flow SD" , "September Flow SD", "October Flow SD", "November Flow SD","December Flow SD",
+                                  "Variance of the flow duration curve","Coefficient of variation of the flow duration curve",
+                                  "Skewness of the flow duration curve","Kurtosis of the flow duration curve", 
+                                  "High 5% Exceedence Flows", "High 25% Exceedence Flows","Low 75% Exceedence Flows", "Low 95% Exceedence Flows",
+                                  "1-Day Minimum", "1-Day Maximum","3-Day Minimum","3-Day Maximum", "7-Day Minimum","7-Day Maximum", "30-Day Minimum","30-Day Maximum", "90-Day Minimum","90-Day Maximum", 
+                                  "1-Day Minimum SD","1-Day Maximum SD", "3-Day Minimum SD", "3-Day Maximum SD", "7-Day Minimum SD","7-Day Maximum SD","30-Day Minimum SD","30-Day Maximum SD","90-Day Minimum SD","90-Day Maximum SD" ,    
+                                  "Zero Flow Days","Base FLow Index", "Zero Flow Days SD","Base FLow Index SD","Date of Annual Minimum Flow","Date of Annual Maximum Flow", "Date of Annual Minimum Flow SD","Date of Annual Maximum Flow SD","Predictability",
+                                  "1-Day Flood Frequency","3-Day Flood Frequency","7-Day Flood Frequency","1-Day Flood Frequency SD", "3-Day Flood Frequency SD","7-Day Flood Frequency SD",
+                                  "Low Pulse Count","Low Pulse Duration","High Pulse Count","High Pulse Duration", "Low Pulse Count SD", "Low Pulse Duration SD", "High Pulse Count SD","High Pulse Duration SD",
+                                  "No Increasing Flow Days","Rise Rate", "No Decreasing Flow Days",  "Fall Rate","No Increasing Flow Days SD","Rise Rate SD","No Decreasing Flow Days SD","Fall Rate SD","Reversal Count","Reversal Count SD"), )
+
+
+PLSR_All1 <- ggplot(melted_VIP[VIP>1 & !sapply(melted_VIP$index, FUN=grepl, pattern="SD")])+
+  geom_col(aes(x=index, y=value, fill=variable),color="black", position = position_dodge2(1, preserve = "single"), width = 1,lwd=0.2)+theme_bw()+
+  theme(text = element_text(size=14),axis.text=element_text(size=14, color="black"), axis.text.x = element_text(angle=65, hjust=1),
+        axis.title=element_blank(), legend.position = "top", panel.grid.major = element_line(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())+ylab("Regression Coefficient")+
+  scale_fill_manual(values=c("#9c8fb1", "#d1d1d1", "#eeca8e"), labels=c("PC1 Variance", "PC2 Variance", "PCA Dispersion"))+
+  guides(fill=guide_legend(title="Model"))+
+  scale_x_discrete(aes(group=groups))
+  
+  
+
+PLSR_All2 <- ggplot(melted_VIP[VIP>1 & sapply(melted_VIP$index, FUN=grepl, pattern="SD")])+
+  geom_col(aes(x=index, y = value, fill=variable),color="black", position = position_dodge2(preserve = "single"), width = 1, lwd=0.5)+theme_bw()+
+  theme(text = element_text(size=14),axis.text=element_text(size=14, color="black"), axis.text.x = element_text(angle=65, hjust=1),
+        axis.title=element_blank(), legend.position = "top", panel.grid.major = element_line(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())+ylab("Regression Coefficient")+
+  scale_fill_manual(values = c("#9c8fb1", "#d1d1d1", "#eeca8e"), labels=c("PC1 Variance", "PC2 Variance", "PCA Dispersion"))+
+  guides(fill=guide_legend(title="Model"))
+
+"#665191", "#dd5182", "#ffa600"
+
+
+pdf('plots/PLSR_All1.pdf', width = 10, height = 6)
+plot(PLSR_All1)
+dev.off()
+pdf('plots/PLSR_All2.pdf', width = 10, height = 6)
+plot(PLSR_All2)
+dev.off()
+
+#### End of PLSR model plot 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
