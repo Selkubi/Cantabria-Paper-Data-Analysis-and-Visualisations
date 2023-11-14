@@ -62,54 +62,56 @@ theme_pca <- theme_bw() +
     axis.line.y.right = element_line(color="white"),
     panel.grid = element_blank())
 
-
+PCA_scores2 <- data.table(pca_data2, wine.pca2$x)
+PCA_rot2 <- data.table(t(cor(PCA_scores2[,c("PC1", "PC2")], pca_data2[,-c(1,95)], method = "pearson")), keep.rownames = "Variables")
 
 Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) +
-  #geom_point(aes(fill=pca_data2$groups, shape=pca_data2$groups),  size=2.5, colour="black") +
-  geom_polygon(data = hull.data, mapping = aes(x=PC1,y=PC2,fill = groups, group = groups), alpha = 0.9) +
-  #geom_segment(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1)*0.9,
-  #                         yend = (PC2)*0.9), arrow = arrow(length = unit(1, "picas")),color = "black") +
-  geom_text(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = (PCAloadings[!startsWith(PCAloadings$Variables, "sd"),]$PC1 * 10), y = (PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10)),
-            label = PCAloadings[!startsWith(PCAloadings$Variables, "sd"), ]$Variables,
-            position = position_jitter(1,1)) +
+  geom_segment(data = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1*9.9), yend = (PC2*9.9)), 
+               arrow = arrow(length = unit(1/2, "picas")),color = "black", alpha = 0.2) +
+  annotate("text", x = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC1*10), y = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC2*10),
+           label = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$Variables, size=4, color="black")+
   theme_pca +
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
   theme(legend.title = element_blank(), legend.position = "none") +
   labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
   theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
-  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2)+xlim(-10, 10) + ylim(-10, 10)
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
+  xlim(-10, 10) + ylim(-10, 10)
 
 pdf('plots/Indice_PCA1.pdf', width = 5, height = 5)
 plot(Indice_PCA1)
 dev.off()
 
-ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_text(data = PCAloadings, aes(x = (PCAloadings[,"PC1"]), y = (PCAloadings[, "PC2"])),
-            label = PCAloadings$Variables)+
-  theme_classic() +
-  theme(legend.title=element_blank(), legend.position = "none") +
-  labs(color = "Sites", x = "PC 1", y = "PC 2", title = "Principal Component Analysis of Flow Indices") +
-  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
-  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2)
-
-
-Indice_PCA2 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  #geom_point(aes(fill=pca_data2$groups, shape=pca_data2$groups),  size=2.5, colour = "black") +
-  geom_polygon(data = hull.data, mapping=aes(x = PC1, y = PC2, fill = groups, group = groups),alpha = 0.9) +
-  #geom_segment(data = PCAloadings[!startsWith(PCAloadings$Variables, "sd"),], aes(x = 0, y = 0, xend = (PC1)*0.9,
-  #                         yend = (PC2)*0.9), arrow = arrow(length = unit(1, "picas")),color = "black") +
-  geom_text(data = PCAloadings[startsWith(PCAloadings$Variables, "sd"), ], aes(x = (PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10)),
-            label = PCAloadings[startsWith(PCAloadings$Variables, "sd"), ]$Variables) +
-  # geom_jitter(aes( x = 2, y = 2)) +
-  theme_classic() +
+Indice_PCA2 <- Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) +
+  geom_segment(data = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1*9.9), yend = (PC2*9.9)), 
+               arrow = arrow(length = unit(1/2, "picas")),color = "black", alpha = 0.2) +
+  annotate("text", x = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC1*10), y = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC2*10),
+           label = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$Variables, size=4, color="black")+
+  theme_pca +
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
   theme(legend.title = element_blank(), legend.position = "none") +
   labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
   theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
-  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10,10) + ylim(-10,10)
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
+  xlim(-10, 10) + ylim(-10, 10)
 
 pdf('plots/Indice_PCA2.pdf', width = 5, height = 5)
 plot(Indice_PCA2)
+dev.off()
+
+River_scores <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) +
+  geom_polygon(data = hull.data, mapping = aes(x = PC1,y = PC2,fill = groups, group = groups), alpha = 0.8) +
+  geom_point(aes(group = pca_data2$groups, fill = pca_data2$groups, shape = pca_data2$groups), size = 2.5) +
+  theme_pca +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
+  scale_shape_manual(values = c(23,22,25,24)) +
+  theme(legend.title = element_blank(), legend.position = "none") +
+  labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
+  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
+
+pdf('plots/River_scores.pdf', width = 5, height = 5)
+plot(River_scores)
 dev.off()
 
 #### The indice bpxplots selected from the previous PCA analyiss ####
