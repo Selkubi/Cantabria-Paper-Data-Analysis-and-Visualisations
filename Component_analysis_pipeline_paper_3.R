@@ -593,7 +593,7 @@ pca_results$groups.x = factor(pca_results$groups.x, levels = c("TempNat", "TempA
 
 individual_pc1 = ggplot(data = pca_results, aes(x=groups.x, y=PC1)) + 
   theme(axis.line.x =  element_line(color="black"),axis.line.y =  element_line(), panel.grid = element_blank(), panel.background = element_blank())+
-  geom_boxplot(aes(x=groups.x, y=PC1,  fill=groups.x, group=reorder(site, PC1, median)),  lwd = 0.2, outlier.size = 0.5)+
+  geom_boxplot(aes(x = groups.x, y = PC1,  fill = groups.x, group=reorder(site, PC1, median)),  lwd = 0.2, outlier.size = 0.5)+
   labs(y="Axis locations", x=NULL)+scale_y_continuous(limits=c(-4,7.5))+
   scale_fill_manual(values =c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
   theme_pca()+theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
@@ -726,3 +726,4 @@ ggplot()+
 
 # Hydrological plots
 source("hydrological_analysis.R")
+
