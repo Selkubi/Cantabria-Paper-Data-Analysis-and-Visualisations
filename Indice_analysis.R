@@ -63,22 +63,21 @@ theme_pca <- theme_bw() +
     panel.grid = element_blank())
 
 PCA_scores2 <- data.table(pca_data2, wine.pca2$x)
-PCA_rot2 <- data.table(t(cor(PCA_scores2[,c("PC1", "PC2")], pca_data2[,-c(1,95)], method = "pearson")), keep.rownames = "Variables")
+PCA_rot2 <- data.table(t(cor(PCA_scores2[,c("PC1", "PC2")], pca_data2[,-c(1,87:95)], method = "pearson")), keep.rownames = "Variables")
 
 Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) +
   geom_segment(data = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1*9.9), yend = (PC2*9.9)), 
                arrow = arrow(length = unit(1/2, "picas")),color = "black", alpha = 0.2) +
   annotate("text", x = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC1*10), y = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC2*10),
-           label = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$Variables, size=4, color="black")+
+          label = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$Variables, size=4, color="black")+
   theme_pca +
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("nA", "aA", "nM", "aM")) +
   theme(legend.title = element_blank(), legend.position = "none") +
   labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
-  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
   xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/Indice_PCA1.pdf', width = 5, height = 5)
+pdf('plots/Indice_PCA1.pdf', width = 3, height = 3)
 plot(Indice_PCA1)
 dev.off()
 
@@ -95,7 +94,7 @@ Indice_PCA2 <- Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
   xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/Indice_PCA2.pdf', width = 5, height = 5)
+pdf('plots/Indice_PCA2.pdf', width = 3, height = 3)
 plot(Indice_PCA2)
 dev.off()
 
@@ -110,7 +109,7 @@ River_scores <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2]))
   theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/River_scores.pdf', width = 5, height = 5)
+pdf('plots/River_scores.pdf', width = 3, height = 3)
 plot(River_scores)
 dev.off()
 
