@@ -192,6 +192,10 @@ multcompView::multcompLetters(m$p.value)
 data = merge(data.table(pca_data, wine.pca$x[, 1:2]), meta_indices ,by.y = "Stream", by.x = "site")
 data = merge(unique(data[, c(1, 3:5, 19:103)]), PC_info, by = c("site", "Class", "alteration"))
 
+shapiro.test(log(data$var_PC2))
+hist(log(data$var_PC2))
+boxplot(data$var_PC2)
+
 model_varPC1 = plsr(var_PC1~., data = data[, -c("site", "Class", "alteration", "groups.x", "mean_PC1", "mean_PC2", "var_PC2", "groups")], 
                   scale = T, validation = "CV")
 summary(model_varPC1)
@@ -199,9 +203,9 @@ summary(model_varPC1)
 model_varPC2 = plsr(var_PC2~., data = data[, -c("site", "Class", "alteration", "groups.x", "mean_PC1", "mean_PC2", "var_PC1", "groups")], scale = T, validation = "CV")
 summary(model_varPC2)
 
-data = merge(disp_all, meta_indices ,by.y = "Stream", by.x = "site")
+data2 = merge(disp_all, meta_indices ,by.y = "Stream", by.x = "site")
 
-model_dispPC_all = plsr(disp_PC_all~., data = data[, -c("site", "Class", "alteration", "groups.x")], scale = T, validation = "CV")
+model_dispPC_all = plsr(disp_PC_all~., data2 = data2[, -c("site", "Class", "alteration", "groups.x")], scale = T, validation = "CV")
 summary(model_dispPC_all)
 
 
