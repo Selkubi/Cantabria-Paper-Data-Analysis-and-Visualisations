@@ -71,12 +71,19 @@ data_sum2 = data_sum[,c("campaign", "site", "groups.x","Class","alteration", "Co
                          "FIX", "FIX2", "HIX2", "beta.alpha", "slope_classic", "slope_lm", "slope_short_Helms", "slope_short_Loiselle",
                          "SR_Helms", "SR_Loiselle", "E2.to.E3", "E4.to.E6", "DecAbsCoeff254")]
 # DOC mean and variance plots and tests
-theme_pca <- function (base_size = 10, base_family = "") {
-  theme_bw(base_size = base_size, base_family = base_family) %+replace% 
-    theme(
-      panel.grid = element_blank()
-    )   
-}
+theme_pca <- theme_bw() +
+  theme(
+    text = element_text(size=11),
+    axis.title = element_text(size=11),
+    axis.text = element_text(size=11, color="black"), 
+    legend.position = "none", 
+    strip.placement ="outside", 
+    strip.background = element_blank(), 
+    strip.text = element_blank(),
+    axis.line =  element_line(color="black"),
+    panel.border = element_blank(),
+    axis.line.y.right = element_line(color="white"),
+    panel.grid = element_blank())
 
 CV = function(x){
   coeff = sd(x, na.rm = T)/mean(x, na.rm = T)
@@ -98,26 +105,11 @@ DOC_sum_DOC$campaign = factor(x = DOC_sum_DOC$campaign, levels = c("oct", "dec",
 
 DOC_sum_melt = melt(DOC_sum, id.vars = c("site", "Class", "groups", "alteration"), measure.vars = c("mean_NPOC", "var_NPOC"))
 
-NPOC_mean_plot <- ggplot(DOC_sum_melt, aes(x=groups, y=value)) +
-  theme(axis.line.x =  element_line(color="black"), 
-        axis.line.y =  element_line(),
-        panel.grid = element_blank(),
-        panel.background = element_blank())+
-  facet_wrap(.~variable, scales="free", strip.position="left", labeller=as_labeller(c(mean_NPOC="DOC Concentration (mg C/L)", var_NPOC="DOC Coefficient of Variation")))+
-  geom_boxplot(mapping=aes(color=groups, fill=groups), alpha=0.2)+
-  geom_point(aes(color=groups, fill=groups, shape=groups), size=2)+
-  scale_shape_manual(values=c(23,22,25,24))+
-  scale_color_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+scale_fill_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+
-  scale_x_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
-                   labels = c("AM", "NM", "AA", "NA"))+
-  theme(axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
-        axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size=20, color="black"))
-
 dir.create("plots") 
 
 data_sum$groups.x=factor(data_sum$groups.x, levels=c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
-mean_NPOC=ggplot(data_sum, aes(x=groups.x, y=(NPOC))) +
+mean_NPOC = ggplot(data_sum, aes(x=groups.x, y=(NPOC))) +
   theme(axis.line.x =  element_line(color="black"), 
         axis.line.y =  element_line(),
         panel.grid = element_blank(),
@@ -135,28 +127,52 @@ pdf('plots/mean_NPOC.pdf', width = 4, height = 4)
 plot(mean_NPOC)
 dev.off()
 
-CV_NPOC = ggplot(DOC_sum, aes(x = groups, y = (var_NPOC))) +
-  theme(axis.line.x =  element_line(color ="black"), 
-        axis.line.y =  element_line(),
-        panel.grid = element_blank(),
-        panel.background = element_blank())+
-  geom_boxplot(mapping = aes(color = groups, fill = groups), alpha=0.2)+
-  geom_point(data = DOC_sum, aes(x = groups, y = var_NPOC, fill = groups, shape = groups), size = 3)+
-  scale_shape_manual(values = c(23,22,25,24))+
-  scale_color_manual(values = c('#942D0A','#E65525', '#043005', "#4F9608")) + scale_fill_manual(values = c('#942D0A','#E65525', '#043005', "#4F9608"))+
-  scale_x_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
-                   labels = c("AM", "NM", "AA", "NA"))+
-  theme(axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
-        axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size=20, color="black"))
+monthly_means =  data_sum[, .(monthly_mean = mean(NPOC, na.rm = TRUE)), by = .(campaign, groups.x)]
 
+mediterranean_DOC = ggplot(data_sum[Class == 'Mediterranean'], aes(x = campaign, y = NPOC)) +
+  geom_line(data = monthly_means[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = monthly_mean, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(25, 24)) +
+  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca+
+  theme(axis.title.x = element_blank())+
+  ylab("DOC mg C/L")
+
+pdf('plots/mediterranean_DOC.pdf', width = 2.8, height = 2.8)
+plot(mediterranean_DOC)
+dev.off()
+
+
+temperate_DOC = ggplot(data_sum[Class == 'Temperate'], aes(x = campaign, y = NPOC)) +
+  geom_line(data = monthly_means[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x = campaign, y = monthly_mean, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(23, 22)) +
+  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca+
+  theme(axis.title.x = element_blank())+
+  ylab("DOC mg C/L")
+
+pdf('plots/temperate_DOC.pdf', width = 2.8, height = 2.8)
+plot(temperate_DOC)
+dev.off()
 
 data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
 
 #### Pipeline 2:1-way flow regime strategy####
 #Pipeline 2, aspect i - annaul mean analyis
 
-shapiro.test(log(DOC_sum$mean_NPOC))
-hist(log(DOC_sum$mean_NPOC))
+shapiro.test((DOC_sum$mean_NPOC))
+hist((DOC_sum$mean_NPOC))
 boxplot(log((DOC_sum$mean_NPOC)))
 
 bartlett.test(log(DOC_sum$mean_NPOC)~DOC_sum$groups)
@@ -171,9 +187,10 @@ t.test(log(mean_NPOC)~alteration, data = DOC_sum[Class == "Temperate"], var.equa
 var.test(log(mean_NPOC)~Class, data = DOC_sum[alteration == "Natural"])
 t.test(log(mean_NPOC)~Class, data = DOC_sum[alteration == "Natural"], var.equal = T)
 
-p.adjust(c( 0.1943,  0.0179, 0.1062), method = "bonferroni", n = 3)
-m = pairwise.t.test(log(DOC_sum$mean_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = F)
-#multcompView::multcompLetters(m$p.value)
+p.adjust(c( 0.2135,  0.02854, 0.08353), method = "bonferroni", n = 3)
+m = pairwise.t.test((DOC_sum$mean_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
+multcompView::multcompLetters(fullPTable(m$p.value))
+
 
 #Pipeline 2, aspect ii - VC analysis 
 shapiro.test(log(DOC_sum$var_NPOC))
@@ -250,7 +267,7 @@ t.test((percent_Humic_C) ~Class, data = DOM_averages[alteration == "Natural"], v
 
 p.adjust(c(0.02067, 0.9364, 0.1284), method = "bonferroni", n = 3)
 
-m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
+m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
 
 
@@ -379,7 +396,7 @@ abline(v = 0, h = 0, lty = 2)
 par(mfrow = c(1,1))
 
 grDevices::pdf('PCA_ploygons2.png', width = 19, height = 20)
-PCA_polygons
+#PCA_polygons
 dev.off()
 
 summary(ordi_MedNat)
