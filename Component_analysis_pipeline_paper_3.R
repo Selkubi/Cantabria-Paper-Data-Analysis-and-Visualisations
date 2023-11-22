@@ -476,7 +476,7 @@ t.test((var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = F)
 p.adjust(c(0.4319, 0.00383, 0.7015), method="bonferroni", n = 3)
 
 m = pairwise.t.test(log(PC_info$var_PC1), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-multcompView::multcompLetters(fullPTable(m$p.value), , threshold = 0.07)
+multcompView::multcompLetters(fullPTable(m$p.value),  threshold = 0.07)
 
 
 #Statistical results of the PC2 aspect (i)
@@ -593,7 +593,7 @@ pl = ggplot(data = disp_melted[variable == "disp_PC_all"], aes(x = groups.x, y =
   #facet_wrap(~variable,  labeller=as_labeller(c(disp_PC1="PC1", disp_PC2="PC2", disp_PC_all="Dispersion on the 2 PC space")))+
   labs(y = "Dispersion", x = NULL)+
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("aM", "nM", "aA", "nA")) +
-  theme_pca() + theme(legend.title = element_blank(), legend.position = "bottom") + scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM",
+  theme_pca + theme(legend.title = element_blank(), legend.position = "bottom") + scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM",
                                                                                                         "TempAlt" = "aA", "TempNat" = "nA"))+
   scale_shape_manual(values = c(23,22,25,24))+
   theme(panel.background = element_rect(fill = NA), strip.background.x = element_rect(fill="white"), strip.text = element_text(size = 11), axis.title = element_text(size = 11))+
@@ -613,7 +613,7 @@ individual_pc1 = ggplot(data = pca_results, aes(x=groups.x, y=PC1)) +
   geom_boxplot(aes(x=groups.x, y=PC1,  fill=groups.x, group=reorder(site, PC1, median)),  lwd = 0.2, outlier.size = 0.5)+
   labs(y="Axis locations", x=NULL)+scale_y_continuous(limits=c(-4,7.5))+
   scale_fill_manual(values =c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
-  theme_pca()+theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
+  theme_pca +theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
   theme(panel.background = element_rect(fill = NA), axis.title = element_text(size=11))+
   theme(text = element_text(size=11),axis.text=element_text(size=11, color="black"),
         axis.title=element_text(size=11), legend.position = "none")+ylab("PC1")
@@ -623,7 +623,7 @@ individual_pc2 = ggplot(data = pca_results, aes(x=groups.x, y=PC2)) +
   geom_boxplot(aes(x=groups.x, y=PC2, fill=groups.x, group=reorder(site, PC2, median)),lwd=0.2, outlier.size=0.5)+
   labs(y="Axis locations", x=NULL)+
   scale_fill_manual(values =c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
-  theme_pca()+theme(legend.title=element_blank())+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
+  theme_pca +theme(legend.title=element_blank())+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
   scale_shape_manual(values=c(23,22,25,24))+scale_y_continuous(limits=c(-5,7.5))+
   theme(panel.background = element_rect(fill = NA), axis.title = element_text(size=11))+
   theme(text = element_text(size=11),axis.text=element_text(size=11, color="black"),
@@ -634,6 +634,119 @@ plot(individual_pc1)
 dev.off()
 pdf('plots/PC2.pdf', width = 4, height = 4)
 plot(individual_pc2)
+dev.off()
+
+#### Plots for showing temporal DOM Change for the flow regimes ####
+variables = c("PC1", "PC2", "beta.alpha")
+monthly_mean_variables =  pca_results[,  lapply(.SD, mean, na.rm = TRUE),  .SDcols = variables,
+                                by = .(campaign, groups.x)]
+
+med_PC1 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC1)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(25, 24)) +
+  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca + 
+  theme(axis.title.x = element_blank()) +
+  ylab("PC1 Scores")
+
+pdf('plots/med_PC1.pdf', width = 2.5, height = 2.5)
+plot(med_PC1)
+dev.off()
+
+temp_PC1 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC1)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(23, 22)) +
+  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca+ 
+  theme(axis.title.x = element_blank())+
+  ylab("PC1 Scores")
+
+pdf('plots/temp_PC1.pdf', width = 2.5, height = 2.5)
+plot(temp_PC1)
+dev.off()
+
+med_PC2 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC2)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(25, 24)) +
+  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca + 
+  theme(axis.title.x = element_blank()) +
+  ylab("PC1 Scores")
+
+pdf('plots/med_PC2.pdf', width = 2.5, height = 2.5)
+plot(med_PC2)
+dev.off()
+
+temp_PC2 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC2)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(23, 22)) +
+  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca+ 
+  theme(axis.title.x = element_blank())+
+  ylab("PC1 Scores")
+
+pdf('plots/temp_PC2.pdf', width = 2.5, height = 2.5)
+plot(temp_PC2)
+dev.off()
+
+med_beta_alpha = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = beta.alpha)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(25, 24)) +
+  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca + 
+  theme(axis.title.x = element_blank()) +
+  ylab("PC1 Scores")
+
+pdf('plots/med_beta_alpha.pdf', width = 2.5, height = 2.5)
+plot(med_PC1)
+dev.off()
+
+temp_beta_alpha = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = beta.alpha)) +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.5) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  scale_shape_manual(values=c(23, 22)) +
+  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
+  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
+                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  theme_pca+ 
+  theme(axis.title.x = element_blank())+
+  ylab("PC1 Scores")
+
+pdf('plots/temp_beta_alpha.pdf', width = 2.5, height = 2.5)
+plot(temp_beta_alpha)
 dev.off()
 
 #### data reflection onto the PCA space ####
