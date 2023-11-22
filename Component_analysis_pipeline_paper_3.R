@@ -71,6 +71,7 @@ data_sum2 = data_sum[,c("campaign", "site", "groups.x","Class","alteration", "Co
                          "FIX", "FIX2", "HIX2", "beta.alpha", "slope_classic", "slope_lm", "slope_short_Helms", "slope_short_Loiselle",
                          "SR_Helms", "SR_Loiselle", "E2.to.E3", "E4.to.E6", "DecAbsCoeff254")]
 # DOC mean and variance plots and tests
+
 theme_pca <- theme_bw() +
   theme(
     text = element_text(size=11),
@@ -84,6 +85,7 @@ theme_pca <- theme_bw() +
     panel.border = element_blank(),
     axis.line.y.right = element_line(color="white"),
     panel.grid = element_blank())
+
 
 CV = function(x){
   coeff = sd(x, na.rm = T)/mean(x, na.rm = T)
@@ -105,9 +107,26 @@ DOC_sum_DOC$campaign = factor(x = DOC_sum_DOC$campaign, levels = c("oct", "dec",
 
 DOC_sum_melt = melt(DOC_sum, id.vars = c("site", "Class", "groups", "alteration"), measure.vars = c("mean_NPOC", "var_NPOC"))
 
+
+NPOC_mean_plot <- ggplot(DOC_sum_melt, aes(x=groups, y=value)) +
+  theme(axis.line.x =  element_line(color="black"), 
+        axis.line.y =  element_line(),
+        panel.grid = element_blank(),
+        panel.background = element_blank())+
+  facet_wrap(.~variable, scales="free", strip.position="left", labeller=as_labeller(c(mean_NPOC="DOC Concentration (mg C/L)", var_NPOC="DOC Coefficient of Variation")))+
+  geom_boxplot(mapping=aes(color=groups, fill=groups), alpha=0.2)+
+  geom_point(aes(color=groups, fill=groups, shape=groups), size=2)+
+  scale_shape_manual(values=c(23,22,25,24))+
+  scale_color_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+scale_fill_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+
+  scale_x_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
+                   labels = c("AM", "NM", "AA", "NA"))+
+  theme(axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
+        axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size=20, color="black"))
+
 dir.create("plots") 
 
 data_sum$groups.x=factor(data_sum$groups.x, levels=c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+
 
 mean_NPOC = ggplot(data_sum, aes(x=groups.x, y=(NPOC))) +
   theme(axis.line.x =  element_line(color="black"), 
@@ -166,13 +185,15 @@ pdf('plots/temperate_DOC.pdf', width = 2.8, height = 2.8)
 plot(temperate_DOC)
 dev.off()
 
+
 data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
 
 #### Pipeline 2:1-way flow regime strategy####
 #Pipeline 2, aspect i - annaul mean analyis
 
-shapiro.test((DOC_sum$mean_NPOC))
-hist((DOC_sum$mean_NPOC))
+
+shapiro.test(log(DOC_sum$mean_NPOC))
+hist(log(DOC_sum$mean_NPOC))
 boxplot(log((DOC_sum$mean_NPOC)))
 
 bartlett.test(log(DOC_sum$mean_NPOC)~DOC_sum$groups)
@@ -267,7 +288,8 @@ t.test((percent_Humic_C) ~Class, data = DOM_averages[alteration == "Natural"], v
 
 p.adjust(c(0.02067, 0.9364, 0.1284), method = "bonferroni", n = 3)
 
-m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
+
+m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
 
 
@@ -397,6 +419,7 @@ par(mfrow = c(1,1))
 
 grDevices::pdf('PCA_ploygons2.png', width = 19, height = 20)
 #PCA_polygons
+
 dev.off()
 
 summary(ordi_MedNat)
@@ -476,7 +499,8 @@ t.test((var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = F)
 p.adjust(c(0.4319, 0.00383, 0.7015), method="bonferroni", n = 3)
 
 m = pairwise.t.test(log(PC_info$var_PC1), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-multcompView::multcompLetters(fullPTable(m$p.value),  threshold = 0.07)
+
+multcompView::multcompLetters(fullPTable(m$p.value), , threshold = 0.07)
 
 
 #Statistical results of the PC2 aspect (i)
@@ -594,6 +618,7 @@ pl = ggplot(data = disp_melted[variable == "disp_PC_all"], aes(x = groups.x, y =
   labs(y = "Dispersion", x = NULL)+
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("aM", "nM", "aA", "nA")) +
   theme_pca + theme(legend.title = element_blank(), legend.position = "bottom") + scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM",
+
                                                                                                         "TempAlt" = "aA", "TempNat" = "nA"))+
   scale_shape_manual(values = c(23,22,25,24))+
   theme(panel.background = element_rect(fill = NA), strip.background.x = element_rect(fill="white"), strip.text = element_text(size = 11), axis.title = element_text(size = 11))+
@@ -749,6 +774,7 @@ pdf('plots/temp_beta_alpha.pdf', width = 2.5, height = 2.5)
 plot(temp_beta_alpha)
 dev.off()
 
+
 #### data reflection onto the PCA space ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
 PCA_rot <- data.table(t(cor(PCA_scores[,c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
@@ -856,3 +882,4 @@ ggplot()+
 
 # Hydrological plots
 source("hydrological_analysis.R")
+
