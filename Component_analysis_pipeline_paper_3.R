@@ -98,33 +98,6 @@ DOC_sum = merge(data_sum2[, .(mean_BDOC = mean(BDOC, na.rm = TRUE), mean_NPOC = 
 
 group_means = DOC_sum[, .(means = mean(mean_NPOC, na.rm = TRUE) , sd_NPOC = sd(mean_NPOC)), by = .(groups)]
 group_CVs = DOC_sum[, .(means = mean(var_NPOC, na.rm = TRUE) , sd_NPOC = sd(var_NPOC)), by = .(groups)]
-
-
-
-DOC_sum_DOC = melt(data_sum, id.vars = c("site", "campaign", "groups.x", "Class"), measure.vars = c("NPOC"))
-DOC_sum_DOC$campaign = factor(x = DOC_sum_DOC$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"))
-
-
-DOC_sum_melt = melt(DOC_sum, id.vars = c("site", "Class", "groups", "alteration"), measure.vars = c("mean_NPOC", "var_NPOC"))
-
-
-NPOC_mean_plot <- ggplot(DOC_sum_melt, aes(x=groups, y=value)) +
-  theme(axis.line.x =  element_line(color="black"), 
-        axis.line.y =  element_line(),
-        panel.grid = element_blank(),
-        panel.background = element_blank())+
-  facet_wrap(.~variable, scales="free", strip.position="left", labeller=as_labeller(c(mean_NPOC="DOC Concentration (mg C/L)", var_NPOC="DOC Coefficient of Variation")))+
-  geom_boxplot(mapping=aes(color=groups, fill=groups), alpha=0.2)+
-  geom_point(aes(color=groups, fill=groups, shape=groups), size=2)+
-  scale_shape_manual(values=c(23,22,25,24))+
-  scale_color_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+scale_fill_manual(values=c('#942D0A','#E65525', '#043005', "#4F9608"))+
-  scale_x_discrete(limits = c("MedAlt", "MedNat", "TempAlt","TempNat"),
-                   labels = c("AM", "NM", "AA", "NA"))+
-  theme(axis.text=element_text(size=15, color="black"), axis.text.x = element_text(angle=45, hjust=1),
-        axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size=20, color="black"))
-
-dir.create("plots") 
-
 data_sum$groups.x=factor(data_sum$groups.x, levels=c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
 
@@ -630,7 +603,6 @@ pdf('plots/PCAll.pdf', width = 2.4, height = 2.5)
 plot(pl)
 dev.off()
 
-
 pca_results$groups.x = factor(pca_results$groups.x, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
 individual_pc1 = ggplot(data = pca_results, aes(x=groups.x, y=PC1)) + 
@@ -668,8 +640,8 @@ monthly_mean_variables =  pca_results[,  lapply(.SD, mean, na.rm = TRUE),  .SDco
 
 med_PC1 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC1)) +
   geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
@@ -680,14 +652,14 @@ med_PC1 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC
   theme(axis.title.x = element_blank()) +
   ylab("PC1 Scores")
 
-pdf('plots/med_PC1.pdf', width = 2.5, height = 2.5)
+pdf('plots/med_PC1.pdf', width = 3, height = 3)
 plot(med_PC1)
 dev.off()
 
 temp_PC1 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC1)) +
   geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
@@ -698,14 +670,14 @@ temp_PC1 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC1))
   theme(axis.title.x = element_blank())+
   ylab("PC1 Scores")
 
-pdf('plots/temp_PC1.pdf', width = 2.5, height = 2.5)
+pdf('plots/temp_PC1.pdf', width = 3, height = 3)
 plot(temp_PC1)
 dev.off()
 
 med_PC2 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC2)) +
   geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
@@ -714,16 +686,16 @@ med_PC2 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
   theme_pca + 
   theme(axis.title.x = element_blank()) +
-  ylab("PC1 Scores")
+  ylab("PC2 Scores")
 
-pdf('plots/med_PC2.pdf', width = 2.5, height = 2.5)
+pdf('plots/med_PC2.pdf', width = 3, height = 3)
 plot(med_PC2)
 dev.off()
 
 temp_PC2 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC2)) +
   geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
@@ -732,16 +704,16 @@ temp_PC2 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC2))
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
   theme_pca+ 
   theme(axis.title.x = element_blank())+
-  ylab("PC1 Scores")
+  ylab("PC2 Scores")
 
-pdf('plots/temp_PC2.pdf', width = 2.5, height = 2.5)
+pdf('plots/temp_PC2.pdf', width = 3, height = 3)
 plot(temp_PC2)
 dev.off()
 
 med_beta_alpha = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = beta.alpha)) +
   geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
@@ -750,16 +722,16 @@ med_beta_alpha = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign,
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
   theme_pca + 
   theme(axis.title.x = element_blank()) +
-  ylab("PC1 Scores")
+  ylab("beta/alpha")
 
-pdf('plots/med_beta_alpha.pdf', width = 2.5, height = 2.5)
-plot(med_PC1)
+pdf('plots/med_beta_alpha.pdf', width = 3, height = 3)
+plot(med_beta_alpha)
 dev.off()
 
 temp_beta_alpha = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = beta.alpha)) +
   geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
+  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
@@ -768,9 +740,9 @@ temp_beta_alpha = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y 
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
   theme_pca+ 
   theme(axis.title.x = element_blank())+
-  ylab("PC1 Scores")
+  ylab("beta/alpha")
 
-pdf('plots/temp_beta_alpha.pdf', width = 2.5, height = 2.5)
+pdf('plots/temp_beta_alpha.pdf', width = 3, height = 3)
 plot(temp_beta_alpha)
 dev.off()
 
