@@ -187,22 +187,22 @@ multcompView::multcompLetters(fullPTable(m$p.value))
 
 
 #Pipeline 2, aspect ii - VC analysis 
-shapiro.test(log(DOC_sum$var_NPOC))
+shapiro.test((DOC_sum$var_NPOC))
 hist(log(DOC_sum$var_NPOC))
 
 bartlett.test(log(DOC_sum$var_NPOC)~DOC_sum$groups)
-oneway.test(log(DOC_sum$var_NPOC) ~ DOC_sum$groups, var.equal = F)
+oneway.test(log(DOC_sum$var_NPOC) ~ DOC_sum$groups, var.equal = T)
 
 var.test(var_NPOC~alteration, data = DOC_sum[Class == "Mediterranean"])
-t.test((var_NPOC)~alteration, data = DOC_sum[Class == "Mediterranean"], var.equal = T)
+t.test(log(var_NPOC)~alteration, data = DOC_sum[Class == "Mediterranean"], var.equal = T)
 
 var.test(var_NPOC~alteration, data = DOC_sum[Class == "Temperate"])
-t.test(var_NPOC~alteration, data = DOC_sum[Class == "Temperate"], var.equal = T)
+t.test(log(var_NPOC)~alteration, data = DOC_sum[Class == "Temperate"], var.equal = T)
 
 var.test(var_NPOC~Class, data = DOC_sum[alteration == "Natural"])
-t.test(var_NPOC~Class, data = DOC_sum[alteration == "Natural"], var.equal = F)
+t.test(log(var_NPOC)~Class, data = DOC_sum[alteration == "Natural"], var.equal = T)
 
-p.adjust(c( 0.01134,  0.5621, 0.5056), method = "bonferroni", n = 3)
+p.adjust(c( 0.01302,  0.5351, 0.6486), method = "bonferroni", n = 3)
 m = pairwise.t.test(DOC_sum$var_NPOC, DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = F)
 multcompView::multcompLetters(fullPTable(m$p.value),  threshold = 0.05)
 
@@ -438,61 +438,60 @@ hist((PC_info$mean_PC1))
 boxplot((PC_info$mean_PC1))
 qqnorm((PC_info$mean_PC1),main = "Normal Q-Q Plot");qqline((PC_info$mean_PC1)) 
 
-bartlett.test(mean_PC2~groups, data = PC_info)
-oneway.test(mean_PC2~groups, var.equal = F, data = PC_info)
+bartlett.test(mean_PC1~groups, data = PC_info)
+oneway.test(mean_PC1~groups, var.equal = T, data = PC_info)
 
-var.test(mean_PC2~alteration, data = PC_info[Class == "Mediterranean"])
-t.test(mean_PC2~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
+var.test(mean_PC1~alteration, data = PC_info[Class == "Mediterranean"])
+t.test(mean_PC1~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
 
-var.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"])
-t.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
+var.test(mean_PC1~alteration, data = PC_info[Class == "Temperate"])
+t.test(mean_PC1~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
 
-var.test(mean_PC2~Class, data = PC_info[alteration == "Natural"])
-t.test(mean_PC2~Class, data = PC_info[alteration == "Natural"], var.equal = F)
+var.test(mean_PC1~Class, data = PC_info[alteration == "Natural"])
+t.test(mean_PC1~Class, data = PC_info[alteration == "Natural"], var.equal = T)
 
 p.adjust(c( 0.03377, 0.0004782,  0.8223), method = "bonferroni", n = 3)
 
 
 #CV of PC1 aspect (ii)
-shapiro.test(log(PC_info$var_PC1))
-hist(log(PC_info$var_PC1))
+shapiro.test((PC_info$var_PC1))
+hist((PC_info$var_PC1))
 
-bartlett.test(log(var_PC1)~groups, data = PC_info)
-oneway.test(log(var_PC1)~groups, var.equal = F, data = PC_info)
+bartlett.test((var_PC1)~groups, data = PC_info)
+oneway.test((var_PC1)~groups, var.equal = T, data = PC_info)
 
-var.test((var_PC2)~alteration, data = PC_info[Class == "Mediterranean"])
-t.test((var_PC2)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = F)
+var.test((var_PC1)~alteration, data = PC_info[Class == "Mediterranean"])
+t.test((var_PC1)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
 
-var.test((var_PC2)~alteration, data = PC_info[Class == "Temperate"])
-t.test((var_PC2)~alteration, data = PC_info[Class == "Temperate"], var.equal = F)
+var.test((var_PC1)~alteration, data = PC_info[Class == "Temperate"])
+t.test((var_PC1)~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
 
-var.test((var_PC2)~Class, data = PC_info[alteration == "Natural"])
-t.test((var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = F)
+var.test((var_PC1)~Class, data = PC_info[alteration == "Natural"])
+t.test((var_PC1)~Class, data = PC_info[alteration == "Natural"], var.equal = T)
 
-p.adjust(c(0.4319, 0.00383, 0.7015), method="bonferroni", n = 3)
+p.adjust(c(0.1603, 0.01589,  0.0496), method="bonferroni", n = 3)
 
 m = pairwise.t.test(log(PC_info$var_PC1), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 
 multcompView::multcompLetters(fullPTable(m$p.value), , threshold = 0.07)
-
 
 #Statistical results of the PC2 aspect (i)
 shapiro.test((PC_info$mean_PC2))
 hist((PC_info$mean_PC2))
 
 bartlett.test(mean_PC2~groups, data = PC_info)
-oneway.test(mean_PC2~groups, var.equal = T, data = PC_info)
+oneway.test(mean_PC2~groups, var.equal = F, data = PC_info)
 
 var.test(mean_PC2~alteration, data = PC_info[Class == "Mediterranean"])
-t.test((mean_PC2)~groups, data = PC_info[Class == "Mediterranean"], var.equal = F)
+t.test((mean_PC2)~groups, data = PC_info[Class == "Mediterranean"], var.equal = T)
 
 var.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"])
-t.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"], var.equal = F)
+t.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
 
 var.test(mean_PC2~Class, data = PC_info[alteration == "Natural"])
 t.test(mean_PC2~Class, data = PC_info[alteration == "Natural"], var.equal = T)
 
-p.adjust(c(0.07537, 0.0008622, 0.8163), method = "bonferroni", n = 3)
+p.adjust(c(0.8163,  0.0004782, 0.03377), method = "bonferroni", n = 3)
 
 m = pairwise.t.test(PC_info$mean_PC2, PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
@@ -505,16 +504,16 @@ hist(log(PC_info$var_PC2))
 bartlett.test(log(var_PC2)~groups, data = PC_info)
 oneway.test(log(var_PC2)~groups, var.equal = T, data=PC_info)
 
-var.test( log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"])
-t.test( log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = F)
+var.test(log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"])
+t.test( log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
 
 var.test( log(var_PC2)~alteration, data = PC_info[Class == "Temperate"])
-t.test(log(var_PC2)~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
+t.test(log(var_PC2)~alteration, data = PC_info[Class == "Temperate"], var.equal = F)
 
 var.test( log(var_PC2)~Class, data = PC_info[alteration == "Natural"])
-t.test( log(var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = T)
+t.test( log(var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = F)
 
-p.adjust(c(0.7324, 0.00036,   0.1091), method = "bonferroni", n = 3)
+p.adjust(c(0.6973, 0.0003826,    0.1542), method = "bonferroni", n = 3)
 
 m = pairwise.t.test(log(PC_info$var_PC2), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
@@ -542,7 +541,10 @@ adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method = "eucli
 
 adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
 
-p.adjust(c(0.07102 ,   0.2437, 0.1165), method = "bonferroni", n = 3)
+#not putting the p adjustd values becaues these are F test-like p values
+p.adjust(c(0.07102 ,  0.2437, 0.1165), method = "bonferroni", n = 3)
+
+var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"])
 
 
 # Temporal dispersion with all PC axes 
@@ -551,23 +553,35 @@ hist(log(Multi_centroid[Class == "Temperate"]$disp_PC_all))
 qqnorm(log(Multi_centroid$disp_PC_all), main="Normal Q-Q Plot of male");qqline(log(Multi_centroid$disp_PC_all))
 
 bartlett.test(log(disp_PC_all)~groups, data = Multi_centroid)
-oneway.test(log(disp_PC_all)~groups, var.equal = F, data = Multi_centroid)
+oneway.test(log(disp_PC_all)~groups, var.equal = T, data = Multi_centroid)
 
 var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"])
-t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"], var.equal = F)
+t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"], var.equal = T)
 
 var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Temperate"])
-t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Temperate"], var.equal = F)
+t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Temperate"], var.equal = T)
 
 var.test(log(disp_PC_all)~Class, data = Multi_centroid[alteration == "Natural"])
-t.test(log(disp_PC_all)~Class, data = Multi_centroid[alteration == "Natural"], var.equal = F)
+t.test(log(disp_PC_all)~Class, data = Multi_centroid[alteration == "Natural"], var.equal = T)
 
-p.adjust(c(0.706, 0.005629, 0.1206), method = "bonferroni", n = 3)
+p.adjust(c(0.1079,  0.00273,  0.6857), method = "bonferroni", n = 3)
 m = pairwise.t.test(log(Multi_centroid$disp_PC_all), Multi_centroid$groups, p.adjust.method = "bonferroni", pool.sd = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
 
 # Aspect (iii): mvd
 summary(aov(betadisper(vegdist((Multi_centroid[, c(3:12)]), method = "euclidian"), Multi_centroid$groups)$distances~Multi_centroid$groups))
+
+# Aspect extra
+river_centroid_dispersions = betadisper(vegdist(Multi_centroid[,3:12], method = "euclidian"), group = Multi_centroid$groups, type="centroid")
+river_centroid_dispersions_sites = data.table(cbind(river_centroid_dispersions=river_centroid_dispersions[["distances"]], 
+                                                                             site = Multi_centroid[["site"]],
+                                                                             groups = Multi_centroid[["groups"]],
+                                                                             alteration = Multi_centroid[["alteration"]],
+                                                                             Class = Multi_centroid[["Class"]]))
+
+summary(aov(river_centroid_dispersions_sites[Class == "Temperate"]$river_centroid_dispersions~river_centroid_dispersions_sites[Class == "Temperate"]$groups))
+summary(aov(river_centroid_dispersions_sites[Class == "Mediterranean"]$river_centroid_dispersions~river_centroid_dispersions_sites[Class == "Mediterranean"]$groups))
+summary(aov(river_centroid_dispersions_sites[alteration == "Natural"]$river_centroid_dispersions~river_centroid_dispersions_sites[alteration == "Natural"]$groups))
 
 # Manuel calculations of multidimensional PCA centroid
 pca_results = cbind(pca_data, wine.pca$x)
@@ -631,119 +645,6 @@ plot(individual_pc1)
 dev.off()
 pdf('plots/PC2.pdf', width = 4, height = 4)
 plot(individual_pc2)
-dev.off()
-
-#### Plots for showing temporal DOM Change for the flow regimes ####
-variables = c("PC1", "PC2", "beta.alpha")
-monthly_mean_variables =  pca_results[,  lapply(.SD, mean, na.rm = TRUE),  .SDcols = variables,
-                                by = .(campaign, groups.x)]
-
-med_PC1 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC1)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(25, 24)) +
-  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca + 
-  theme(axis.title.x = element_blank()) +
-  ylab("PC1 Scores")
-
-pdf('plots/med_PC1.pdf', width = 3, height = 3)
-plot(med_PC1)
-dev.off()
-
-temp_PC1 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC1)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(23, 22)) +
-  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+ 
-  theme(axis.title.x = element_blank())+
-  ylab("PC1 Scores")
-
-pdf('plots/temp_PC1.pdf', width = 3, height = 3)
-plot(temp_PC1)
-dev.off()
-
-med_PC2 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC2)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(25, 24)) +
-  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca + 
-  theme(axis.title.x = element_blank()) +
-  ylab("PC2 Scores")
-
-pdf('plots/med_PC2.pdf', width = 3, height = 3)
-plot(med_PC2)
-dev.off()
-
-temp_PC2 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC2)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(23, 22)) +
-  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+ 
-  theme(axis.title.x = element_blank())+
-  ylab("PC2 Scores")
-
-pdf('plots/temp_PC2.pdf', width = 3, height = 3)
-plot(temp_PC2)
-dev.off()
-
-med_beta_alpha = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = beta.alpha)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(25, 24)) +
-  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca + 
-  theme(axis.title.x = element_blank()) +
-  ylab("beta/alpha")
-
-pdf('plots/med_beta_alpha.pdf', width = 3, height = 3)
-plot(med_beta_alpha)
-dev.off()
-
-temp_beta_alpha = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = beta.alpha)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(23, 22)) +
-  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+ 
-  theme(axis.title.x = element_blank())+
-  ylab("beta/alpha")
-
-pdf('plots/temp_beta_alpha.pdf', width = 3, height = 3)
-plot(temp_beta_alpha)
 dev.off()
 
 
