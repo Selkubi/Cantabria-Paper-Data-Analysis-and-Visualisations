@@ -8,11 +8,30 @@ variables = c("PC1", "PC2", "beta.alpha")
 monthly_mean_variables =  pca_results[,  lapply(.SD, mean, na.rm = TRUE),  .SDcols = variables,
                                       by = .(campaign, groups.x)]
 
-med_PC1 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC1/max(PC1))) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC1/max(PC1), group = groups.x, color = groups.x), lwd = 1.2) +
+river_mean = pca_results[, lapply(.SD, mean, na.rm = TRUE),
+                        .SDcols = variables, 
+                        by = .(site, Class, groups.x, alteration)]
+
+river_sd = pca_results[, lapply(.SD, sd, na.rm = TRUE),
+                         .SDcols = variables, 
+                         by = .(site, Class, groups.x, alteration)]
+
+# z-score standardised pca values for PC1 PC2 and beta.alpha( calculated from X-Mean/SD formula)
+pca_PC1= cbind(PC1_norm = (pca_results$PC1-river_mean$PC1[match(pca_results$site, river_mean$site)])/(river_sd$PC1[match(pca_results$site, river_mean$site)]),
+               pca_results)
+
+pca_PC2= cbind(PC2_norm = (pca_results$PC2-river_mean$PC2[match(pca_results$site, river_mean$site)])/(river_sd$PC2[match(pca_results$site, river_mean$site)]),
+               pca_results)
+
+pca_beta_alpha= cbind(beta_alpha_norm = (pca_results$beta.alpha-river_mean$beta.alpha[match(pca_results$site, river_mean$site)])/(river_sd$beta.alpha[match(pca_results$site, river_mean$site)]),
+               pca_results)
+
+pca_PC1[, mean_PC1_norm := mean(PC1_norm), by = .(campaign, groups.x)]    
+
+med_PC1 = ggplot(pca_PC1[Class == 'Mediterranean'], aes(x = campaign, y = PC1_norm    )) +
+  geom_line(aes(x=campaign, y = mean_PC1_norm, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
-  geom_point(aes(x = campaign, y = PC1/max(PC1), group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
   scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
