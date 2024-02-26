@@ -533,19 +533,52 @@ disp_PC_all = tapply(betas_PC_all[["distances"]], betas_PC_all[["group"]], mean)
 Multi_centroid = data.table(cbind(disp_PC_all, betas_PC_all[["centroids"]], match(rownames(betas_PC_all[["centroids"]]), rownames(disp_PC_all))), keep.rownames = "site")
 Multi_centroid = Multi_centroid[site_info, on = .(site)]
 
-adonis2(vegdist(Multi_centroid[,3:12], method = "euclidian")~Multi_centroid$groups, permutations = 100000)
+# These correspond to the "Mean DOM composotion" for the Global Tests on Dispersion table. 
+gb_fr = adonis2(vegdist(Multi_centroid[,3:12], method = "euclidian")~Multi_centroid$groups, permutations = 100000)
 
-adonis2(vegdist(Multi_centroid[Class == "Mediterranean", c(3:12)], method = "euclidian")~alteration, data = Multi_centroid[Class == "Mediterranean"], permutations = 100000)
+gb_me = adonis2(vegdist(Multi_centroid[Class == "Mediterranean", c(3:12)], method = "euclidian")~alteration, data = Multi_centroid[Class == "Mediterranean"], permutations = 100000)
 
-adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method = "euclidian")~alteration, data = Multi_centroid[Class == "Temperate"], permutations = 100000)
+gb_te = adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method = "euclidian")~alteration, data = Multi_centroid[Class == "Temperate"], permutations = 100000)
 
-adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
+gb_nat = adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
+
+get_adonis_results = function(x){
+  
+  #take the F value, p_value and df 
+  p_value = signif(x[["Pr(>F)"]][1], 2)
+  F_value = signif(x[["F"]][1], 3)
+  df_value = as.character(paste0(x[["Df"]][1], ":", x[["Df"]][2]))
+  
+  # make a results table
+  results = data.table(pair = c("all_regimes"),
+                       p_value = p_value,
+                       F_value = (F_value),
+                       df_value = df_value)
+                     
+  return(results)
+}
+
+do_bonferroni_to_adonis = function(x_nat, x_te, x_me) {
+  # compute the bonferroni corrected p values
+  adjusted_p_values = p.adjust(c(x_nat["Pr(>F)"][1,], x_te["Pr(>F)"][1,], x_me["Pr(>F)"][1,]), method = "bonferroni", n = 3)
+  # make a table with the corrected p values and the related F and df values
+  results = data.table(pair = c("nA-nM", "nA-aA", "nM-aM"),
+                       p_value = signif(adjusted_p_values, 3),
+                       F_value = signif(c(x_nat[["F"]][1], x_te[["F"]][1], x_me[["F"]][1]), 3),
+                       df_value = c(paste0(x_nat[["Df"]][1], ":", x_nat[["Df"]][2]),
+                              paste0(x_te[["Df"]][1], ":", x_te[["Df"]][2]),
+                              paste0(x_me[["Df"]][1], ":", x_me[["Df"]][2]))
+                       )
+  return(results)
+}
+
+mean_DOM_composition_results = rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
+
+colnames = c("Test", "flow_regime", "nA-nM", "nA-aA", "aM-aM")
+mean_DOM = c("F" = gb_fr[["F"]][1])
 
 #not putting the p adjustd values becaues these are F test-like p values
-p.adjust(c(0.07102 ,  0.2437, 0.1165), method = "bonferroni", n = 3)
-
-var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"])
-
+p.adjust(c(0.07102,  0.2437, 0.1165), method = "bonferroni", n = 3)
 
 # Temporal dispersion with all PC axes 
 shapiro.test(log(Multi_centroid$disp_PC_all))
