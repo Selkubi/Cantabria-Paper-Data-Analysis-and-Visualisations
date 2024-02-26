@@ -5,12 +5,13 @@ site_info <- as.data.table(read.csv("site_summary.csv"))
 flow_data <-data.table(read.csv("Flow_HYDRA_2017_2018_cleanSK.csv", header = T))
 flow_data$date <- lubridate::mdy(flow_data$Date)
 flow <- flow_data[flow_data$date<"2018-10-01" & flow_data$date>= "2017-10-01"]
+#flow = flow_data use this if you want all years as part of the anaysis instead of the measurement years
 
 flow[, c("year", "month", "day") := tstrsplit(date, "-")]
 flow[,c("year", "month", "day") := lapply(flow[,c("year", "month", "day")], FUN = as.numeric)]
 
 monthly_means <- data.table(aggregate(x = flow[,-c("month", "Date", "day", "date")], by=flow[,c("month")], FUN = mean,na.rm = T, nan.rm = T))
-rivers = c(colnames(monthly_means[,3:22]))
+rivers = c(colnames(monthly_means[,2:22]))
 monthly_max <- t(monthly_means[, lapply(.SD, max, na.rm =TRUE), .SDcols = rivers ])
 annual_max_discharge = data.table('variable' = row.names(monthly_max), "annual_max" = monthly_max[,1])
 
@@ -18,6 +19,7 @@ means <- melt(monthly_means[,-22], id.vars="month")
 means <- means[annual_max_discharge, on = .(variable = variable)]
 means <- data.table(merge(means, site_info, by.x="variable", by.y="site"))
 means$month <- as.factor(means$month)
+means = means[means$variable!="Carrion",]
 
 means_summary <- means[, .(min = min(value, na.rm = TRUE), 
                            max = max(value, na.rm = TRUE),
