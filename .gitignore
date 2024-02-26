@@ -11,3 +11,9 @@ abs_data/
 *.jpg
 *.txt
 *.pdf
+Component_analysis_pipeline_paper.R
+Component_analysis_pipeline_paper_2.R
+REgression coeff.xlsx
+VC calculations.xlsx
+p-values.xlsx
+pipeline2_pvalues.xlsx
