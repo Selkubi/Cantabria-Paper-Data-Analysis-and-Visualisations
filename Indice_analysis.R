@@ -113,6 +113,11 @@ pdf('plots/River_scores.pdf', width = 3, height = 3)
 plot(River_scores)
 dev.off()
 
+plot(wine.pca$x[, c(1:2)], type = "n", ylim = c(-10, 10), xlim = c(-10,10), cex.main = 1.5, cex.axis = 1.25)
+p = ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups ,display = "sites",draw = "polygon", label = F,
+         alpha = 0.7, col = c("#B4DCED"))
+summary(p)
+
 #### The indice bpxplots selected from the previous PCA analyiss ####
 data <- pca_data2[, c("Stream", "groups", "alteration","Class",  "nPLow", "dPLow", "nPHigh", "dPHigh")]
 ggplot() +
@@ -205,7 +210,7 @@ summary(model_varPC2)
 
 data2 = merge(disp_all, meta_indices ,by.y = "Stream", by.x = "site")
 
-model_dispPC_all = plsr(disp_PC_all~., data2 = data2[, -c("site", "Class", "alteration", "groups.x")], scale = T, validation = "CV")
+model_dispPC_all = plsr(disp_PC_all~., data = data2[, -c("site", "Class", "alteration", "groups.x")], scale = T, validation = "CV")
 summary(model_dispPC_all)
 
 
@@ -339,7 +344,7 @@ PLSR_All2 <- ggplot(melted_VIP[VIP>1 & sapply(melted_VIP$index, FUN=grepl, patte
   scale_fill_manual(values = c("#9c8fb1", "#d1d1d1", "#eeca8e"), labels=c("PC1 Variance", "PC2 Variance", "PCA Dispersion"))+
   guides(fill=guide_legend(title="Model"))
 
-"#665191", "#dd5182", "#ffa600"
+# "#665191", "#dd5182", "#ffa600"
 
 
 pdf('plots/PLSR_All1.pdf', width = 10, height = 6)
