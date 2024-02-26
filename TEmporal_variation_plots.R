@@ -28,15 +28,16 @@ pca_beta_alpha= cbind(beta_alpha_norm = (pca_results$beta.alpha-river_mean$beta.
 
 pca_PC1[, mean_PC1_norm := mean(PC1_norm), by = .(campaign, groups.x)]    
 
-med_PC1 = ggplot(pca_PC1[Class == 'Mediterranean'], aes(x = campaign, y = PC1_norm    )) +
-  geom_line(aes(x=campaign, y = mean_PC1_norm, group = groups.x, color = groups.x), lwd = 1.2) +
+med_PC1 = ggplot(pca_PC1[Class == 'Mediterranean'], aes(x = campaign, y = PC1)) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
   scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca + 
   theme(axis.title.x = element_blank()) +
   ylab("PC1 Scores")
@@ -46,15 +47,15 @@ plot(med_PC1)
 dev.off()
 
 temp_PC1 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC1)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = PC1, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
   scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca+ 
   theme(axis.title.x = element_blank())+
   ylab("PC1 Scores")
@@ -64,15 +65,15 @@ plot(temp_PC1)
 dev.off()
 
 med_PC2 = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = PC2)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
   scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca + 
   theme(axis.title.x = element_blank()) +
   ylab("PC2 Scores")
@@ -82,15 +83,15 @@ plot(med_PC2)
 dev.off()
 
 temp_PC2 = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = PC2)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = PC2, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
   scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca+ 
   theme(axis.title.x = element_blank())+
   ylab("PC2 Scores")
@@ -100,15 +101,15 @@ plot(temp_PC2)
 dev.off()
 
 med_beta_alpha = ggplot(pca_results[Class == 'Mediterranean'], aes(x = campaign, y = beta.alpha)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(25, 24)) +
   scale_color_manual(values=c('#F5CB7D','#F09E41')) +
   scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca + 
   theme(axis.title.x = element_blank()) +
   ylab("beta/alpha")
@@ -118,15 +119,15 @@ plot(med_beta_alpha)
 dev.off()
 
 temp_beta_alpha = ggplot(pca_results[Class == 'Temperate'], aes(x = campaign, y = beta.alpha)) +
-  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.2) +
   geom_line(aes(group = site, color = groups.x), lwd = 0.3) +
   geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
+  geom_line(data = monthly_mean_variables[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
+            aes(x=campaign, y = beta.alpha, group = groups.x, color = groups.x), lwd = 1.3) +
   scale_shape_manual(values=c(23, 22)) +
   scale_color_manual(values=c("#B4DCED", '#6996D1')) +
   scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("Feb", "May", "Oct","Apr", "Aug", "Dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
+  scale_x_discrete(limits = c("Feb","Apr","May","Aug", "Oct", "Dec"),
+                   labels = c("Feb", "Apr", "May","Aug", "Oct", "Dec")) +
   theme_pca+ 
   theme(axis.title.x = element_blank())+
   ylab("beta/alpha")
