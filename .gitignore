@@ -4,6 +4,8 @@
 .Ruserdata
 Component_analysis_pipeline_2.R
 PCA_ploygons2.png
-plots
-meta_file_2.csv
-
+plots/
+old_plots/
+abs_data/
+*.png
+*.jpg
