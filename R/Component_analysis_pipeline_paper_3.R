@@ -7,16 +7,16 @@ library(lubridate)
 library(rcompanion)
 
 ####Getting the data####
-sample_loadings <- as.data.table(read.csv("denormalised_sample_loadings.csv"))
-sample_names <- as.data.table(read.csv("sample_name_site_match.csv"))
-site_info <- as.data.table(read.csv("site_summary.csv"))
+sample_loadings <- as.data.table(read.csv("data/PARAFAC_data/denormalised_sample_loadings.csv"))
+sample_names <- as.data.table(read.csv("data/metafiles/sample_name_site_match.csv"))
+site_info <- as.data.table(read.csv("data/metafiles/site_summary.csv"))
 
-oct1<- as.data.table(cbind(read.table("abs_data/oct.txt", sep=",", header=TRUE), campaign="oct"))
-feb1<- as.data.table(cbind(read.table("abs_data/feb.txt", sep=",", header=TRUE), campaign="feb"))
-apr1<- as.data.table(cbind(read.table("abs_data/apr.txt", sep=",", header=TRUE), campaign="apr"))
-may1<- as.data.table(cbind(read.table("abs_data/may.txt", sep=",", header=TRUE), campaign="may"))
-aug1<- as.data.table(cbind(read.table("abs_data/aug.txt", sep=",", header=TRUE), campaign="aug"))
-dec1<- as.data.table(cbind(read.table("abs_data/dec.txt", sep=",", header=TRUE), campaign="dec"))
+oct1<- as.data.table(cbind(read.table("data/abs_data/oct.txt", sep=",", header=TRUE), campaign="oct"))
+feb1<- as.data.table(cbind(read.table("data/abs_data/feb.txt", sep=",", header=TRUE), campaign="feb"))
+apr1<- as.data.table(cbind(read.table("data/abs_data/apr.txt", sep=",", header=TRUE), campaign="apr"))
+may1<- as.data.table(cbind(read.table("data/abs_data/may.txt", sep=",", header=TRUE), campaign="may"))
+aug1<- as.data.table(cbind(read.table("data/abs_data/aug.txt", sep=",", header=TRUE), campaign="aug"))
+dec1<- as.data.table(cbind(read.table("data/abs_data/dec.txt", sep=",", header=TRUE), campaign="dec"))
 
 oct1[,"site"] <- substr(oct1$site, 1, nchar(oct1$site)-4)
 apr1[,"site"] <- substr(apr1$site, 1, nchar(apr1$site)-4)
@@ -35,7 +35,7 @@ data_means = aggregate(x = abs_data[, c("FIX", "FIX2", "HIX", "HIX2", "beta.alph
                                     "slope_classic", "slope_lm", "slope_short_Loiselle", "slope_short_Helms", "SR_Loiselle", "SR_Helms")], 
                      by = abs_data[,c("site", "campaign")], FUN = mean, na.rm = T, trim = 0.25)
 
-meta_sum_optical = as.data.table(cbind(read.csv("meta_file_2.csv"),data_means), key = c("site","campaign"))
+meta_sum_optical = as.data.table(cbind(read.csv("data/metafiles/meta_file_2.csv"),data_means), key = c("site","campaign"))
 
 # Converting the sample names without the index numbers - wouldn't need it if data were named with 000
 sample_loadings[, c("campaign", "run", "sample2", "num") := tstrsplit(sample, "_")]
@@ -44,6 +44,8 @@ setdiff(sample_names$sample_code, sample_loadings$sample_code) #Check why these 
 
 ##### Binding the data frames ####
 meta_component_data = merge(sample_loadings, sample_names, by.x=c("sample_code", "campaign"), by.y=c("sample_code", "campaign"))
+
+# We excluded Carrion from here onwards due to very low concentrations on all seasons
 meta_component_data = meta_component_data[meta_component_data$site!="Carrion",]
 meta_sum_optical = meta_sum_optical[meta_sum_optical$site!="Carrion",]
 sample_names = sample_names[sample_names$site!="Carrion",]
@@ -56,10 +58,8 @@ data_sum[, "SUVA254" := DecAbsCoeff254/NPOC]
 data_sum[data_sum[, SUVA254 > 6]]$SUVA254 = NA #This is definitely a weird point. Sama sample as below. Seems like an outlier. Changes the PLSR table of now
 data_sum[data_sum[, SR_Loiselle > 1.7]]$SR_Loiselle = NA
 
-ggplot(data_sum)+
-  geom_point(aes(E2.to.E3, site))
 
-# Here I replace the under the detection limit values
+# Here we replace the under the detection limit values with the half value
 below_detection_limit = function(data) {
   data = gsub(x = data, pattern = c("<0,1", "<0,01", "<0,02", "<0,06"), replacement = c("0.05","0.005", "0.01", "0.03") ) #Or replacement is c("0.1","0.01", "0.02", "0.06") for abslute detection limits
   return(as.numeric(data))
@@ -114,8 +114,9 @@ mean_NPOC = ggplot(data_sum, aes(x=groups.x, y=(NPOC))) +
   theme(axis.text = element_text(color="black", size=11), axis.title.x=element_blank(),legend.position = "none")+
   ylab("DOC mg C/L")
 
-
-pdf('plots/mean_NPOC.pdf', width = 4, height = 4)
+if(!dir.exists("output/plots")) {dir.create("output/plots")}
+  
+pdf('output/plots/mean_NPOC.pdf', width = 4, height = 4)
 plot(mean_NPOC)
 dev.off()
 
@@ -135,7 +136,7 @@ mediterranean_DOC = ggplot(data_sum[Class == 'Mediterranean'], aes(x = campaign,
   theme(axis.title.x = element_blank())+
   ylab("DOC mg C/L")
 
-pdf('plots/mediterranean_DOC.pdf', width = 2.8, height = 2.8)
+pdf('output/plots/mediterranean_DOC.pdf', width = 2.8, height = 2.8)
 plot(mediterranean_DOC)
 dev.off()
 
@@ -154,7 +155,7 @@ temperate_DOC = ggplot(data_sum[Class == 'Temperate'], aes(x = campaign, y = NPO
   theme(axis.title.x = element_blank())+
   ylab("DOC mg C/L")
 
-pdf('plots/temperate_DOC.pdf', width = 2.8, height = 2.8)
+pdf('output/plots/temperate_DOC.pdf', width = 2.8, height = 2.8)
 plot(temperate_DOC)
 dev.off()
 
@@ -390,7 +391,7 @@ abline(v = 0, h = 0, lty = 2)
 
 par(mfrow = c(1,1))
 
-grDevices::pdf('PCA_ploygons2.png', width = 19, height = 20)
+grDevices::pdf('output/plots/PCA_ploygons2.png', width = 19, height = 20)
 #PCA_polygons
 
 dev.off()
@@ -646,7 +647,7 @@ pl = ggplot(data = disp_melted[variable == "disp_PC_all"], aes(x = groups.x, y =
         axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"))
 
 
-pdf('plots/PCAll.pdf', width = 2.4, height = 2.5)
+pdf('output/plots/PCAll.pdf', width = 2.4, height = 2.5)
 plot(pl)
 dev.off()
 
@@ -673,10 +674,10 @@ individual_pc2 = ggplot(data = pca_results, aes(x=groups.x, y=PC2)) +
   theme(text = element_text(size=11),axis.text=element_text(size=11, color="black"),
         axis.title=element_text(size=11), legend.position = "none")+ylab("PC2")
 
-pdf('plots/PC1.pdf', width = 4, height = 4)
+pdf('output/plots/PC1.pdf', width = 4, height = 4)
 plot(individual_pc1)
 dev.off()
-pdf('plots/PC2.pdf', width = 4, height = 4)
+pdf('output/plots/PC2.pdf', width = 4, height = 4)
 plot(individual_pc2)
 dev.off()
 
@@ -734,7 +735,7 @@ plot_points <- ggplot(pca_results, aes(x = wine.pca$x[, 1], y = wine.pca$x[, 2])
   theme(axis.text =  element_text(size=11, color="black"),axis.title=element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size=5, alpha=1)))
 
-pdf('plots/PCA_points.pdf', width = 2.7, height = 2.5)
+pdf('output/plots/PCA_points.pdf', width = 2.7, height = 2.5)
 plot(plot_points)
 dev.off()
 
@@ -767,19 +768,19 @@ plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
   geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
   theme(text = element_text(size=20),axis.text=element_text(size=20, color = "black"))
  
- pdf('plots/PCA_optical.pdf', width = 6.7, height = 6)
+ pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
  plot(PCA_optical)
  dev.off()
 #### end ####
 
 #### Hydrological Indices Analysis ####
 
-source("indice_analysis.R")
+source("R/indice_analysis.R")
 
 
 #### Loading plots ####
-parafac_em <- read.csv("Em.csv")
-parafac_ex<- read.csv("Ex.csv")
+parafac_em <- read.csv("data/PARAFAC_data/Em.csv")
+parafac_ex<- read.csv("data/PARAFAC_data/Ex.csv")
 ggplot()+
   geom_line(aes(x=parafac_em$Em,y=(1/3)*(parafac_em$Comp.8)))+
   geom_line(aes(x=parafac_ex$Ex,y=3*(parafac_ex$Comp.8)), linetype = "dashed")+
@@ -787,5 +788,5 @@ ggplot()+
   labs(title="Comp8")
 
 # Hydrological plots
-source("hydrological_analysis.R")
+source("R/hydrological_analysis.R")
 

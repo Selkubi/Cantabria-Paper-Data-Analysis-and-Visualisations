@@ -5,18 +5,20 @@ library(mdatools)
 library(data.table)
 library(ggplot2)
 
-source("Component_analysis_pipeline_paper_3.R")
+source("R/Component_analysis_pipeline_paper_3.R")
 
 #### Hydrological Indices Analysis ####
-magnitude_ind <- read.csv("Hydra_Hydro_Ind_subs_group1.csv")
-magnitude_duration_extreme_ind <- read.csv("Hydra_Hydro_Ind_subs_group2.csv")
-timing_extreme_ind <- read.csv("Hydra_Hydro_Ind_subs_group3.csv")
-freq_duration_pulses_ind <- read.csv("Hydra_Hydro_Ind_subs_group4.csv")
-rate_freq_ind <- read.csv("Hydra_Hydro_Ind_subs_group5.csv")
+magnitude_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group1.csv")
+magnitude_duration_extreme_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group2.csv")
+timing_extreme_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group3.csv")
+freq_duration_pulses_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group4.csv")
+rate_freq_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group5.csv")
 
 meta_indices <- as.data.table(Reduce(function(x,y) merge(x=x, y=y, by="Stream"), x = list(magnitude_ind, magnitude_duration_extreme_ind, 
                                                                                      timing_extreme_ind,freq_duration_pulses_ind,rate_freq_ind)))
-site_info <- as.data.table(read.csv("site_summary.csv"))
+site_info <- as.data.table(read.csv("data/metafiles/site_summary.csv"))
+
+# We remove the Carrion sample same as in other analysis due to low C concentration
 site_info <- site_info[site_info$site!="Carrion",]
 meta_indices <- meta_indices[Stream!="Carrion"]  
 
@@ -77,7 +79,7 @@ Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2])) 
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
   xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/Indice_PCA1.pdf', width = 3, height = 3)
+pdf('output/plots/Indice_PCA1.pdf', width = 3, height = 3)
 plot(Indice_PCA1)
 dev.off()
 
@@ -94,7 +96,7 @@ Indice_PCA2 <- Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
   xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/Indice_PCA2.pdf', width = 3, height = 3)
+pdf('output/plots/Indice_PCA2.pdf', width = 3, height = 3)
 plot(Indice_PCA2)
 dev.off()
 
@@ -109,7 +111,7 @@ River_scores <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y=wine.pca2$x[, 2]))
   theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
   geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
 
-pdf('plots/River_scores.pdf', width = 3, height = 3)
+pdf('output/plots/River_scores.pdf', width = 3, height = 3)
 plot(River_scores)
 dev.off()
 
@@ -138,7 +140,7 @@ hydro_indices <- ggplot(melted_data)+
   theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement ="outside", 
         strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
   
-pdf('plots/Indice_boxplots.pdf', width = 5, height = 5)
+pdf('output/plots/Indice_boxplots.pdf', width = 5, height = 5)
 plot(hydro_indices)
 dev.off()
 
@@ -159,7 +161,7 @@ fre_indice <- ggplot(melted_data2)+
   theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement ="outside", 
         strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
 
-pdf('plots/fre_indice_boxplots.pdf', width = 6, height = 1.5)
+pdf('output/plots/fre_indice_boxplots.pdf', width = 6, height = 1.5)
 plot(fre_indice)
 dev.off()
 
@@ -347,10 +349,10 @@ PLSR_All2 <- ggplot(melted_VIP[VIP>1 & sapply(melted_VIP$index, FUN=grepl, patte
 # "#665191", "#dd5182", "#ffa600"
 
 
-pdf('plots/PLSR_All1.pdf', width = 10, height = 6)
+pdf('output/plots/PLSR_All1.pdf', width = 10, height = 6)
 plot(PLSR_All1)
 dev.off()
-pdf('plots/PLSR_All2.pdf', width = 10, height = 6)
+pdf('output/plots/PLSR_All2.pdf', width = 10, height = 6)
 plot(PLSR_All2)
 dev.off()
 
