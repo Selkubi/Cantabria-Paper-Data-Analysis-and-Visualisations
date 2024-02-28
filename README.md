@@ -1,5 +1,5 @@
 # Processing optical data 
-
+#### Logo
 ### Badges
 
 ### Intorduction 
@@ -12,6 +12,7 @@
 
 ### How to use it
 - [ ] what is the main processing pipeline
+- [ ] explanatin of the main functionality
 - [ ] short example
 
 ### Contributors
@@ -20,3 +21,5 @@
 ### How to contribute
 
 ### How to cite 
+
+### License/copyright
