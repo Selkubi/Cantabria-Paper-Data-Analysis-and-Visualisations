@@ -263,7 +263,7 @@ t.test((percent_Humic_C) ~Class, data = DOM_averages[alteration == "Natural"], v
 p.adjust(c(0.02067, 0.9364, 0.1284), method = "bonferroni", n = 3)
 
 
-m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
+#m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
 multcompView::multcompLetters(fullPTable(m$p.value))
 
 
@@ -543,36 +543,7 @@ gb_te = adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method 
 
 gb_nat = adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
 
-get_adonis_results = function(x){
-  
-  #take the F value, p_value and df 
-  p_value = signif(x[["Pr(>F)"]][1], 2)
-  F_value = signif(x[["F"]][1], 3)
-  df_value = as.character(paste0(x[["Df"]][1], ":", x[["Df"]][2]))
-  
-  # make a results table
-  results = data.table(pair = c("all_regimes"),
-                       p_value = p_value,
-                       F_value = (F_value),
-                       df_value = df_value)
-                     
-  return(results)
-}
-
-do_bonferroni_to_adonis = function(x_nat, x_te, x_me) {
-  # compute the bonferroni corrected p values
-  adjusted_p_values = p.adjust(c(x_nat["Pr(>F)"][1,], x_te["Pr(>F)"][1,], x_me["Pr(>F)"][1,]), method = "bonferroni", n = 3)
-  # make a table with the corrected p values and the related F and df values
-  results = data.table(pair = c("nA-nM", "nA-aA", "nM-aM"),
-                       p_value = signif(adjusted_p_values, 3),
-                       F_value = signif(c(x_nat[["F"]][1], x_te[["F"]][1], x_me[["F"]][1]), 3),
-                       df_value = c(paste0(x_nat[["Df"]][1], ":", x_nat[["Df"]][2]),
-                              paste0(x_te[["Df"]][1], ":", x_te[["Df"]][2]),
-                              paste0(x_me[["Df"]][1], ":", x_me[["Df"]][2]))
-                       )
-  return(results)
-}
-
+modules::use("R/functions")
 mean_DOM_composition_results = rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
 
 colnames = c("Test", "flow_regime", "nA-nM", "nA-aA", "aM-aM")
