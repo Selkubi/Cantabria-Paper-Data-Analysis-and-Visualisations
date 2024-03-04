@@ -61,7 +61,8 @@ data_sum[data_sum[, SR_Loiselle > 1.7]]$SR_Loiselle = NA
 
 # Here we replace the under the detection limit values with the half value
 below_detection_limit = function(data) {
-  data = gsub(x = data, pattern = c("<0,1", "<0,01", "<0,02", "<0,06"), replacement = c("0.05","0.005", "0.01", "0.03") ) #Or replacement is c("0.1","0.01", "0.02", "0.06") for abslute detection limits
+  data = gsub(x = data, pattern = c("<0,1", "<0,01", "<0,02", "<0,06"), 
+              replacement = c("0.05","0.005", "0.01", "0.03") ) #Or replacement is c("0.1","0.01", "0.02", "0.06") for abslute detection limits
   return(as.numeric(data))
 }
 
@@ -160,69 +161,61 @@ plot(temperate_DOC)
 dev.off()
 
 
-data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
+data_sum$C_tot <- data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
 
 #### Pipeline 2:1-way flow regime strategy####
 #Pipeline 2, aspect i - annaul mean analyis
-
 
 shapiro.test(log(DOC_sum$mean_NPOC))
 hist(log(DOC_sum$mean_NPOC))
 boxplot(log((DOC_sum$mean_NPOC)))
 
-bartlett.test(log(DOC_sum$mean_NPOC)~DOC_sum$groups)
-oneway.test(log(DOC_sum$mean_NPOC)~DOC_sum$groups, var.equal = T)
+datasets <- list(Natural = DOC_sum[alteration == "Natural"], 
+                 Temperate = DOC_sum[Class == "Temperate"], 
+                 Mediterranean = DOC_sum[Class == "Mediterranean"])
 
-var.test(log(mean_NPOC)~alteration, data = DOC_sum[Class == "Mediterranean"])
-t.test(log(mean_NPOC)~alteration, data = DOC_sum[Class == "Mediterranean"], var.equal = T)
+mean_NPOC_table = oneway_test_results(data = DOC_sum, "mean_NPOC", "groups", log_normalise = T)
 
-var.test(log(mean_NPOC)~alteration, data = DOC_sum[Class == "Temperate"])
-t.test(log(mean_NPOC)~alteration, data = DOC_sum[Class == "Temperate"], var.equal = T)
+results_mean_NPOC_all_pairs = lapply(datasets, t_test_results,
+                           response_variable = "mean_NPOC",
+                           grouping_factor = "groups",
+                           log_normalise = T)
 
-var.test(log(mean_NPOC)~Class, data = DOC_sum[alteration == "Natural"])
-t.test(log(mean_NPOC)~Class, data = DOC_sum[alteration == "Natural"], var.equal = T)
+p.adjust(c(results_mean_NPOC_all_pairs$Natural$p_value[2], 
+           results_mean_NPOC_all_pairs$Temperate$p_value[2], 
+           results_mean_NPOC_all_pairs$Mediterranean$p_value[2]),
+           method = "bonferroni", n = 3)
 
-p.adjust(c( 0.2135,  0.02854, 0.08353), method = "bonferroni", n = 3)
-m = pairwise.t.test((DOC_sum$mean_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
+m = pairwise.t.test(log(DOC_sum$mean_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
 multcompView::multcompLetters(fullPTable(m$p.value))
 
 
 #Pipeline 2, aspect ii - VC analysis 
-shapiro.test((DOC_sum$var_NPOC))
+shapiro.test(log(DOC_sum$var_NPOC))
 hist(log(DOC_sum$var_NPOC))
 
-bartlett.test(log(DOC_sum$var_NPOC)~DOC_sum$groups)
-oneway.test(log(DOC_sum$var_NPOC) ~ DOC_sum$groups, var.equal = T)
+var_NPOC_table = oneway_test_results(data = DOC_sum, "var_NPOC", "groups", log_normalise = T)
 
-var.test(var_NPOC~alteration, data = DOC_sum[Class == "Mediterranean"])
-t.test(log(var_NPOC)~alteration, data = DOC_sum[Class == "Mediterranean"], var.equal = T)
+results_var_NPOC_all_pairs = lapply(datasets, t_test_results,
+                           response_variable = "var_NPOC",
+                           grouping_factor = "groups",
+                           log_normalise = T)
 
-var.test(var_NPOC~alteration, data = DOC_sum[Class == "Temperate"])
-t.test(log(var_NPOC)~alteration, data = DOC_sum[Class == "Temperate"], var.equal = T)
+p.adjust(c(results_var_NPOC_all_pairs$Natural$p_value[2], 
+           results_var_NPOC_all_pairs$Temperate$p_value[2], 
+           results_var_NPOC_all_pairs$Mediterranean$p_value[2]),
+           method = "bonferroni", n = 3)
 
-var.test(var_NPOC~Class, data = DOC_sum[alteration == "Natural"])
-t.test(log(var_NPOC)~Class, data = DOC_sum[alteration == "Natural"], var.equal = T)
+m = pairwise.t.test(log(DOC_sum$var_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
+multcompView::multcompLetters(fullPTable(m$p.value))
 
-p.adjust(c( 0.01302,  0.5351, 0.6486), method = "bonferroni", n = 3)
-m = pairwise.t.test(DOC_sum$var_NPOC, DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = F)
-multcompView::multcompLetters(fullPTable(m$p.value),  threshold = 0.05)
-
-#multcompLetters(m$p.value)
-
-#Pipeline 2. aspect iii - variance tests
-var.test(mean_NPOC~alteration, data = DOC_sum[Class == "Mediterranean"])
-var.test(mean_NPOC~alteration, data = DOC_sum[Class == "Temperate"])
-var.test(mean_NPOC~Class, data = DOC_sum[alteration =="Natural"])
-
-var.test(var_NPOC~alteration, data = DOC_sum[Class == "Mediterranean"])
-var.test(var_NPOC~alteration, data = DOC_sum[Class == "Temperate"])
-var.test(var_NPOC~Class, data = DOC_sum[alteration == "Natural"])
 #### End of DOC mean and variance 
+
 #### DOM quality plots####
 data_summary = data_sum[, .(FI2 = (FIX), HI2= (HIX2), 
                           beta.alpha2 = (beta.alpha ), SUVA254_2 = (SUVA254),
                           SR = (SR_Loiselle ), E2toE3 = (E2.to.E3 ),
-                          C_HMWS = (HMWS_C/CDOC ), C_LMWS = (LMWS_C/CDOC ),
+                          C_HMWS = (HMWS_C/CDOC), C_LMWS = (LMWS_C/CDOC),
                           C_HS = (humic_like_substance_C/CDOC ),
                           C_terrestrial = ((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot),
                           C_protein = ((Comp.6 + Comp.7 + Comp.8) / C_tot)),
@@ -543,7 +536,7 @@ gb_te = adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method 
 
 gb_nat = adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
 
-modules::use("R/functions")
+modules::use("R")
 mean_DOM_composition_results = rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
 
 colnames = c("Test", "flow_regime", "nA-nM", "nA-aA", "aM-aM")

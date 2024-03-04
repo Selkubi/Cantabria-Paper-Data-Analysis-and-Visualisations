@@ -1,11 +1,11 @@
-#' Title
+#' Gets the degress of freedom, p values and F values from the  Permanova computations. 
 #'
-#' @param x 
+#' @param x the adonis object to get the results from 
 #'
-#' @return
+#' @return a data table that has the p values, f values and the degrees of freedom
 #' @export
 #'
-#' @examples
+#' @examples 
 get_adonis_results = function(x){
   
   #take the F value, p_value and df 

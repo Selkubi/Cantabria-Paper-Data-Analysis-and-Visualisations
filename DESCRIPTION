@@ -1,2 +1,12 @@
-Package: FLEELAB.CantabriaOpticalDataAnalysis
+Package: getting.statistics
 RoxygenNote: 7.3.1
+Type: Package
+Title: Processes absorbance and fluoresence data
+Version: 0.1.0
+Author: Selin Kubilay
+Maintainer: Selin Kubilay <kubilay.selin@gmail.com>
+Description: Absorbance and fluroesence data is collected as part of the FLEE lab research project. \nThis package processes the colleced field data and replicates the results stated in the paper. 
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Rmd: man
