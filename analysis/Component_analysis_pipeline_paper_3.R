@@ -1,233 +1,77 @@
-library(vegan)
-library(geosphere)
-library(gridExtra)
-library(data.table)
-library(ggplot2)
-library(lubridate)
-library(rcompanion)
+# library(vegan)
+ library(geosphere)
+# library(gridExtra)
+# library(data.table)
+# library(ggplot2)
+# library(lubridate)
 
-####Getting the data####
-sample_loadings <- as.data.table(read.csv("data/PARAFAC_data/denormalised_sample_loadings.csv"))
-sample_names <- as.data.table(read.csv("data/metafiles/sample_name_site_match.csv"))
-site_info <- as.data.table(read.csv("data/metafiles/site_summary.csv"))
+#### The functions to be used are here, but first you have to load the project package
+roxygen2::roxygenize()
 
-oct1<- as.data.table(cbind(read.table("data/abs_data/oct.txt", sep=",", header=TRUE), campaign="oct"))
-feb1<- as.data.table(cbind(read.table("data/abs_data/feb.txt", sep=",", header=TRUE), campaign="feb"))
-apr1<- as.data.table(cbind(read.table("data/abs_data/apr.txt", sep=",", header=TRUE), campaign="apr"))
-may1<- as.data.table(cbind(read.table("data/abs_data/may.txt", sep=",", header=TRUE), campaign="may"))
-aug1<- as.data.table(cbind(read.table("data/abs_data/aug.txt", sep=",", header=TRUE), campaign="aug"))
-dec1<- as.data.table(cbind(read.table("data/abs_data/dec.txt", sep=",", header=TRUE), campaign="dec"))
+#### 1. Data Cleaning ####
+source("analysis/Data_Cleaning.R")
 
-oct1[,"site"] <- substr(oct1$site, 1, nchar(oct1$site)-4)
-apr1[,"site"] <- substr(apr1$site, 1, nchar(apr1$site)-4)
+##### 2. DOC Mean and CV plots #####
+source("analysis/DOC_DOM_plots.R")
 
-abs_data = rbind(oct1,feb1, apr1, may1, aug1,dec1)
-abs_data = subset(abs_data, subset = !grepl("^Blank", abs_data$site))
-
-abs_data[abs_data[, HIX == "Inf"]]$HIX = NA
-abs_data[abs_data[, HIX > 100]]$HIX = NA
-abs_data[abs_data[, E2.to.E3 < 0]]$E2.to.E3 = NA
-abs_data[abs_data[, E2.to.E3 > 30]]$E2.to.E3 = NA
-abs_data[abs_data[, E4.to.E6 < 0]]$E4.to.E6 = NA
-
-
-data_means = aggregate(x = abs_data[, c("FIX", "FIX2", "HIX", "HIX2", "beta.alpha","DecAbsCoeff254", "DecAbsCoeff420", "DecAbsCoeff430", "DecAbsCoeff436", "E2.to.E3", "E4.to.E6", 
-                                    "slope_classic", "slope_lm", "slope_short_Loiselle", "slope_short_Helms", "SR_Loiselle", "SR_Helms")], 
-                     by = abs_data[,c("site", "campaign")], FUN = mean, na.rm = T, trim = 0.25)
-
-meta_sum_optical = as.data.table(cbind(read.csv("data/metafiles/meta_file_2.csv"),data_means), key = c("site","campaign"))
-
-# Converting the sample names without the index numbers - wouldn't need it if data were named with 000
-sample_loadings[, c("campaign", "run", "sample2", "num") := tstrsplit(sample, "_")]
-sample_loadings[,c("sample_code") := paste0(sample_loadings$campaign,"_", sample_loadings$run, "_", sample_loadings$sample2)]
-setdiff(sample_names$sample_code, sample_loadings$sample_code) #Check why these are not matching. In my case, they are the samples removed during parafac because of weird looking eems.So it makes sense to remove them here too since there might be a contamination affecting all
-
-##### Binding the data frames ####
-meta_component_data = merge(sample_loadings, sample_names, by.x=c("sample_code", "campaign"), by.y=c("sample_code", "campaign"))
-
-# We excluded Carrion from here onwards due to very low concentrations on all seasons
-meta_component_data = meta_component_data[meta_component_data$site!="Carrion",]
-meta_sum_optical = meta_sum_optical[meta_sum_optical$site!="Carrion",]
-sample_names = sample_names[sample_names$site!="Carrion",]
-
-##### Prepping for the DOC mean and variance plots ####
-data_sum = aggregate(meta_component_data[,c("Comp.1","Comp.2","Comp.3","Comp.4","Comp.5","Comp.6","Comp.7","Comp.8")], by = meta_component_data[, c("campaign", "site")], FUN = mean, na.rm = T)
-data_sum = merge(site_info, data_sum, by.x = c("site"), by.y = c("site"))
-data_sum = merge(data_sum, meta_sum_optical[, -c(14, 15)], by = c("site","campaign"))
-data_sum[, "SUVA254" := DecAbsCoeff254/NPOC]
-data_sum[data_sum[, SUVA254 > 6]]$SUVA254 = NA #This is definitely a weird point. Sama sample as below. Seems like an outlier. Changes the PLSR table of now
-data_sum[data_sum[, SR_Loiselle > 1.7]]$SR_Loiselle = NA
-
-
-# Here we replace the under the detection limit values with the half value
-below_detection_limit = function(data) {
-  data = gsub(x = data, pattern = c("<0,1", "<0,01", "<0,02", "<0,06"), 
-              replacement = c("0.05","0.005", "0.01", "0.03") ) #Or replacement is c("0.1","0.01", "0.02", "0.06") for abslute detection limits
-  return(as.numeric(data))
-}
-
-data_sum[, c("HMWS_C", "humic_like_substance_C", "LMWS_C", "HMWS_N", "HS", "SUVA_HS", "SUVA_ges")] = lapply(data_sum[,c("HMWS_C", "humic_like_substance_C", "LMWS_C", "HMWS_N", "HS", "SUVA_HS", "SUVA_ges")], FUN = below_detection_limit)
-
-data_sum2 = data_sum[,c("campaign", "site", "groups.x","Class","alteration", "Comp.1", "Comp.2",  "Comp.3", "Comp.4", "Comp.5", "Comp.6", "Comp.7", "Comp.8", "BDOC", "NPOC", "SUVA254",
-                         "FIX", "FIX2", "HIX2", "beta.alpha", "slope_classic", "slope_lm", "slope_short_Helms", "slope_short_Loiselle",
-                         "SR_Helms", "SR_Loiselle", "E2.to.E3", "E4.to.E6", "DecAbsCoeff254")]
-# DOC mean and variance plots and tests
-
-theme_pca <- theme_bw() +
-  theme(
-    text = element_text(size=11),
-    axis.title = element_text(size=11),
-    axis.text = element_text(size=11, color="black"), 
-    legend.position = "none", 
-    strip.placement ="outside", 
-    strip.background = element_blank(), 
-    strip.text = element_blank(),
-    axis.line =  element_line(color="black"),
-    panel.border = element_blank(),
-    axis.line.y.right = element_line(color="white"),
-    panel.grid = element_blank())
-
-
-CV = function(x){
-  coeff = sd(x, na.rm = T)/mean(x, na.rm = T)
-  print(coeff)
-}
-
-DOC_sum = merge(data_sum2[, .(mean_BDOC = mean(BDOC, na.rm = TRUE), mean_NPOC = mean(NPOC, na.rm = TRUE), 
-                                    var_BDOC = CV(BDOC), var_NPOC = CV(NPOC)), by = .(site)], 
-                                   site_info[site != "Carrion",c("site", "Class", "alteration", "groups")])
-
-group_means = DOC_sum[, .(means = mean(mean_NPOC, na.rm = TRUE) , sd_NPOC = sd(mean_NPOC)), by = .(groups)]
-group_CVs = DOC_sum[, .(means = mean(var_NPOC, na.rm = TRUE) , sd_NPOC = sd(var_NPOC)), by = .(groups)]
-data_sum$groups.x=factor(data_sum$groups.x, levels=c("TempNat", "TempAlt", "MedNat", "MedAlt"))
-
-
-mean_NPOC = ggplot(data_sum, aes(x=groups.x, y=(NPOC))) +
-  theme(axis.line.x =  element_line(color="black"), 
-        axis.line.y =  element_line(),
-        panel.grid = element_blank(),
-        panel.background = element_blank())+
-  geom_boxplot(mapping=aes(fill=groups.x, group=reorder(site, NPOC, median)), varwidth = T, width=1, lwd=0.2, outlier.size = 0.5)+
-  scale_shape_manual(values=c(23,22,25,24))+
-  scale_fill_manual(values=c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
-  scale_x_discrete(limits = c("TempNat", "TempAlt", "MedNat","MedAlt"),
-                   labels = c("nA", "aA", "nM", "aM"))+
-  theme(axis.text = element_text(color="black", size=11), axis.title.x=element_blank(),legend.position = "none")+
-  ylab("DOC mg C/L")
+mean_NPOC 
 
 if(!dir.exists("output/plots")) {dir.create("output/plots")}
-  
 pdf('output/plots/mean_NPOC.pdf', width = 4, height = 4)
 plot(mean_NPOC)
 dev.off()
 
-monthly_means =  data_sum[, .(monthly_mean = mean(NPOC, na.rm = TRUE)), by = .(campaign, groups.x)]
-
-mediterranean_DOC = ggplot(data_sum[Class == 'Mediterranean'], aes(x = campaign, y = NPOC)) +
-  geom_line(data = monthly_means[groups.x == 'MedAlt' | groups.x == 'MedNat'], 
-            aes(x=campaign, y = monthly_mean, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(25, 24)) +
-  scale_color_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
-  scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+
-  theme(axis.title.x = element_blank())+
-  ylab("DOC mg C/L")
+mediterranean_DOC 
 
 pdf('output/plots/mediterranean_DOC.pdf', width = 2.8, height = 2.8)
 plot(mediterranean_DOC)
 dev.off()
 
-
-temperate_DOC = ggplot(data_sum[Class == 'Temperate'], aes(x = campaign, y = NPOC)) +
-  geom_line(data = monthly_means[groups.x == 'TempAlt' | groups.x == 'TempNat'], 
-            aes(x = campaign, y = monthly_mean, group = groups.x, color = groups.x), lwd = 1.5) +
-  geom_line(aes(group = site, color = groups.x), lwd = 0.5) +
-  geom_point(aes(group = site, shape = groups.x, fill = groups.x), size = 2, color = 'black') +
-  scale_shape_manual(values=c(23, 22)) +
-  scale_color_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
-  scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
-                   labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+
-  theme(axis.title.x = element_blank())+
-  ylab("DOC mg C/L")
+temperate_DOC
 
 pdf('output/plots/temperate_DOC.pdf', width = 2.8, height = 2.8)
 plot(temperate_DOC)
 dev.off()
 
-
-data_sum$C_tot <- data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
-
-#### Pipeline 2:1-way flow regime strategy####
-#Pipeline 2, aspect i - annaul mean analyis
-
+##### 3. Statistical tests for DOC concentration mean values #####
 shapiro.test(log(DOC_sum$mean_NPOC))
 hist(log(DOC_sum$mean_NPOC))
 boxplot(log((DOC_sum$mean_NPOC)))
 
-datasets <- list(Natural = DOC_sum[alteration == "Natural"], 
-                 Temperate = DOC_sum[Class == "Temperate"], 
-                 Mediterranean = DOC_sum[Class == "Mediterranean"])
+pairwise_results_mean <- lapply(DOC_sum[, c(3,5)], pairwise.t.test, DOC_sum$groups, p.adjust.methods = "bonferroni", pool.sd = T)
 
-mean_NPOC_table = oneway_test_results(data = DOC_sum, "mean_NPOC", "groups", log_normalise = T)
+oneway_test_results(DOC_sum, "mean_NPOC", "groups", log_normalise = T)
+statistics_pipeline_wrapper(DOC_sum, "mean_NPOC", "groups", log_normalise = T)
+multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["mean_NPOC"]]$p.value))$Letters
 
-results_mean_NPOC_all_pairs = lapply(datasets, t_test_results,
-                           response_variable = "mean_NPOC",
-                           grouping_factor = "groups",
-                           log_normalise = T)
-
-p.adjust(c(results_mean_NPOC_all_pairs$Natural$p_value[2], 
-           results_mean_NPOC_all_pairs$Temperate$p_value[2], 
-           results_mean_NPOC_all_pairs$Mediterranean$p_value[2]),
-           method = "bonferroni", n = 3)
-
-m = pairwise.t.test(log(DOC_sum$mean_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-
-#Pipeline 2, aspect ii - VC analysis 
+####  4. Statistical tests for DOC concentration CV values ####
 shapiro.test(log(DOC_sum$var_NPOC))
 hist(log(DOC_sum$var_NPOC))
+boxplot(log((DOC_sum$var_NPOC)))
 
-var_NPOC_table = oneway_test_results(data = DOC_sum, "var_NPOC", "groups", log_normalise = T)
+oneway_test_results(DOC_sum, "var_NPOC", "groups", log_normalise = T)
+statistics_pipeline_wrapper(DOC_sum, "var_NPOC", "groups", log_normalise = T)
+multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["var_NPOC"]]$p.value))$Letters
 
-results_var_NPOC_all_pairs = lapply(datasets, t_test_results,
-                           response_variable = "var_NPOC",
-                           grouping_factor = "groups",
-                           log_normalise = T)
+#### End of DOC mean and CV ####
 
-p.adjust(c(results_var_NPOC_all_pairs$Natural$p_value[2], 
-           results_var_NPOC_all_pairs$Temperate$p_value[2], 
-           results_var_NPOC_all_pairs$Mediterranean$p_value[2]),
-           method = "bonferroni", n = 3)
-
-m = pairwise.t.test(log(DOC_sum$var_NPOC), DOC_sum$groups, p.adjust.method = "bonferroni", pool.sd = T)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-#### End of DOC mean and variance 
-
-#### DOM quality plots####
-data_summary = data_sum[, .(FI2 = (FIX), HI2= (HIX2), 
-                          beta.alpha2 = (beta.alpha ), SUVA254_2 = (SUVA254),
-                          SR = (SR_Loiselle ), E2toE3 = (E2.to.E3 ),
-                          C_HMWS = (HMWS_C/CDOC), C_LMWS = (LMWS_C/CDOC),
-                          C_HS = (humic_like_substance_C/CDOC ),
-                          C_terrestrial = ((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot),
-                          C_protein = ((Comp.6 + Comp.7 + Comp.8) / C_tot)),
-                          by = .(site, alteration, Class,  groups.x, campaign)]
+#### DOM composition ####
+# data_summary = data_sum[, .(FI2 = (FIX), HI2= (HIX2), 
+#                           beta.alpha2 = (beta.alpha ), SUVA254_2 = (SUVA254),
+#                           SR = (SR_Loiselle ), E2toE3 = (E2.to.E3 ),
+#                           C_HMWS = (HMWS_C/CDOC), C_LMWS = (LMWS_C/CDOC),
+#                           C_HS = (humic_like_substance_C/CDOC ),
+#                           C_terrestrial = ((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot),
+#                           C_protein = ((Comp.6 + Comp.7 + Comp.8) / C_tot)),
+#                           by = .(site, alteration, Class,  groups.x, campaign)]
 
 #data_summary[data_summary[, C_HMWS > 0.3]]$C_HMWS = NA
 #data_summary[data_summary[, C_HS > 1.5]]$C_HS = NA
 
 data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
 
-#### Statistical tests for the quality parameters ####
-DOM_averages = data_sum[,.(FI2 = mean(FIX, na.rm = T), HI2 = mean(HIX2, na.rm = T), 
+##### 1. DOM composition Mean and sd Calculation ####
+DOM_averages <- data_sum[,.(FI2 = mean(FIX, na.rm = T), HI2 = mean(HIX2, na.rm = T), 
                          beta.alpha2= mean(beta.alpha, na.rm = T), SUVA254_2 = mean(SUVA254, na.rm = T),
                          SR = mean(SR_Loiselle, na.rm = T), E2toE3 = mean(E2.to.E3, na.rm = T), 
                          C_humic = mean((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot, na.rm = T),
@@ -238,29 +82,59 @@ DOM_averages = data_sum[,.(FI2 = mean(FIX, na.rm = T), HI2 = mean(HIX2, na.rm = 
                          percent_LMWS_C = mean(LMWS_C / CDOC, na.rm = T, trim = 5)),
                       by = .(site, groups.x, Class, alteration)]
 
-shapiro.test((DOM_averages$beta.alpha2))
-hist((DOM_averages$beta.alpha2))
+mean_DOM_values <- data.table(get_mean_and_sd(DOM_averages, "percent_Humic_C", "groups.x")[,1])
+for(i in names(DOM_averages[,-c(1:4)])) {
+  mean_DOM_values <- merge(mean_DOM_values, get_mean_and_sd(DOM_averages,  names(DOM_averages[, ..i]), "groups.x"), by = "name")
+}
+# all the mean+-sd values for DOM composition variables
+t(mean_DOM_values)
 
-bartlett.test((percent_Humic_C) ~groups.x, data = DOM_averages)
-oneway.test((percent_Humic_C) ~groups.x, var.equal = T, data = DOM_averages)
+##### 2. Statistical tests for DOM composition mean values ####
+# check the shapiro test results of all the values
+shapiro_test_results <- sapply(DOM_averages[, -c(1:4)], function(x) shapiro.test(x)$p.value)
 
-var.test((percent_Humic_C) ~alteration, data = DOM_averages[Class == "Mediterranean"])
-t.test((percent_Humic_C) ~alteration, data = DOM_averages[Class == "Mediterranean"], var.equal = T)
+# plot the histograms to visually check the normality
+par(mfrow = c(3, 4))
+for (col in names(DOM_averages[, -c(1:4)])) {
+  hist(DOM_averages[[col]], main = col, xlab = "Value")
+}
+par(mfrow = c(1, 1))
 
-var.test((percent_Humic_C) ~alteration, data = DOM_averages[Class == "Temperate"])
-t.test((percent_Humic_C)~alteration, data = DOM_averages[Class == "Temperate"], var.equal = T)
+# Create a log_normalise vector of logical values looking at the above histograms and shapiro results
+log_normalise <- rep(F, 12)
+log_normalise[c(9, 10, 11)] <- T
 
-var.test((percent_Humic_C) ~Class, data = DOM_averages[alteration == "Natural"])
-t.test((percent_Humic_C) ~Class, data = DOM_averages[alteration == "Natural"], var.equal = T)
+# calculate the oneway tset results of all the values (ir the flow regime tests have p < 0.05)
+pairwise_results_mean <- lapply(DOM_averages[,-c(1:4)], pairwise.t.test, DOM_averages$groups.x, p.adjust.methods = "bonferroni", pool.sd = T)
 
-p.adjust(c(0.02067, 0.9364, 0.1284), method = "bonferroni", n = 3)
+mean_results <- vector("list", length = length(names(DOM_averages[, -c(1:4)])))
+names(mean_results) <-  names(DOM_averages[, -c(1:4)])
+for(i in seq_along(DOM_averages[,-c(1:4)])) {
+  names(mean_results[i]) <- names(DOM_averages[, -c(1:4)])[i]
+  mean_results[[i]]<- statistics_pipeline_wrapper(DOM_averages,  names(DOM_averages[,-c(1:4)])[i], "groups.x", log_normalise = log_normalise[i])
+  mean_results[[i]][["t_test_Letters"]] <- multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[[i]]$p.value))$Letters
+} 
 
 
-#m = pairwise.t.test(log(DOM_averages$percent_HMWS_C), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-multcompView::multcompLetters(fullPTable(m$p.value))
+# all the statistical test results for the mean values 
+mean_results
 
+##### 3. Printing F test and t-test results for DOM composition mean values #####
+F_test_list <- list()
+t_test_list <- list()
+t_test_letters <- list()
+for (variable_name in names(mean_results)) {
+  F_test_list[[variable_name]] <- mean_results[[variable_name]]$F_test
+  t_test_list[[variable_name]] <- mean_results[[variable_name]]$t_test
+  t_test_letters[[variable_name]] <- mean_results[[variable_name]]$t_test_Letters
+}
+F_test_list
+t_test_list
+t_test_letters
 
-#CV of PC2 aspect (ii)
+#### End of mean +-sd results and the related statistical tests ####
+
+##### 4. DOM composition CV and sd calculations #####
 DOM_CV_averages = data_sum[,.(FI2_cv = CV(FIX), HI2_cv = CV(HIX2), 
                             beta.alpha2_cv = CV(beta.alpha), SUVA254_2_cv = CV(SUVA254),
                             SR_cv = CV(SR_Loiselle), E2toE3_cv = CV(E2.to.E3), 
@@ -272,44 +146,54 @@ DOM_CV_averages = data_sum[,.(FI2_cv = CV(FIX), HI2_cv = CV(HIX2),
                             percent_LMWS_C_cv = CV(LMWS_C / CDOC)),
                          by = .(site, groups.x, Class, alteration)]
 
-signif((aggregate(DOM_averages$percent_Humic_C, by = DOM_averages[,"groups.x"], FUN = mean)$x), 2)
-signif((aggregate(DOM_averages$percent_Humic_C, by = DOM_averages[,"groups.x"], FUN = sd))$x , 1)
+CV_DOM_values <- data.table(get_mean_and_sd(DOM_CV_averages, "FI2_cv", "groups.x")[,1])
+for(i in names(DOM_CV_averages[,-c(1:4)])) {
+  CV_DOM_values <- merge(CV_DOM_values, get_mean_and_sd(DOM_CV_averages,  names(DOM_CV_averages[, ..i]), "groups.x"), by = "name")
+}
+# all the mean+-sd values for DOM composition variables
+t(CV_DOM_values)
 
-signif((aggregate(DOM_CV_averages$percent_Humic_C, by=DOM_CV_averages[,"groups.x"], FUN = mean))$x, 1)
-signif(aggregate(DOM_CV_averages$percent_Humic_C, by=DOM_CV_averages[,"groups.x"], FUN = sd)$x , 1)
+##### 5. Statistical tests for DOM composition CV values ####
+# check the shapiro test results of all the values
+shapiro_test_results <- sapply(DOM_CV_averages[, -c(1:4)], function(x) shapiro.test(x)$p.value)
 
+# plot the histograms to visually check the normality
+par(mfrow = c(3, 4))
+for (col in names(DOM_CV_averages[, -c(1:4)])) {
+  hist(DOM_CV_averages[[col]], main = col, xlab = "Value")
+}
+par(mfrow = c(1, 1))
 
-shapiro.test(log(DOM_CV_averages$HI2_cv))
-hist(log(DOM_CV_averages$HI2_cv))
-boxplot(log(DOM_CV_averages$HI2_cv))
-qqnorm(log(DOM_CV_averages$HI2_cv),main = "Normal Q-Q Plot");qqline(log(DOM_CV_averages$HI2_cv)) 
+#  Create a log_normalise vector of logical values looking at the above histograms and shapiro results
+log_normalise <- rep(F, 12)
+log_normalise[c(6, 7, 8, 11)] <- T
 
+# calculate the oneway test results of all the values (ir the flow regime tests have p < 0.05)
+pairwise_results_CV <- lapply(DOM_CV_averages[,-c(1:4)], pairwise.t.test, DOM_CV_averages$groups.x, p.adjust.methods = "bonferroni", pool.sd = T)
 
-bartlett.test(log(percent_Humic_C_cv)~groups.x, data = DOM_CV_averages)
-oneway.test(log(percent_Humic_C_cv)~groups.x, var.equal = F, data = DOM_CV_averages)
+CV_results <- vector("list", length = length(names(DOM_CV_averages[, -c(1:4)])))
+names(CV_results) <-  names(DOM_CV_averages[, -c(1:4)])
+for(i in seq_along(DOM_CV_averages[,-c(1:4)])) {
+  names(CV_results[i]) <- names(DOM_CV_averages[, -c(1:4)])[i]
+  CV_results[[i]]<- statistics_pipeline_wrapper(DOM_CV_averages,  names(DOM_CV_averages[,-c(1:4)])[i], "groups.x", log_normalise = log_normalise[i])
+  CV_results[[i]][["t_test_Letters"]] <- multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_CV[[i]]$p.value))$Letters
+} 
 
-var.test(log(percent_Humic_C_cv)~alteration, data = DOM_CV_averages[Class == "Mediterranean"])
-t.test(log(percent_Humic_C_cv)~alteration, data = DOM_CV_averages[Class == "Mediterranean"], var.equal = T)
+CV_results
 
-var.test(log(percent_Humic_C_cv)~alteration, data = DOM_CV_averages[Class == "Temperate"])
-t.test(log(percent_Humic_C_cv)~alteration, data = DOM_CV_averages[Class == "Temperate"], var.equal = T)
-
-var.test(log(percent_Humic_C_cv)~Class, data = DOM_CV_averages[alteration == "Natural"])
-t.test(log(percent_Humic_C_cv)~Class, data = DOM_CV_averages[alteration == "Natural"], var.equal = T)
-
-p.adjust(c(0.05581, 0.003154, 0.08455), method = "bonferroni")
-
-m = pairwise.t.test(log(DOM_CV_averages$C_protein_cv), DOM_CV_averages$groups.x, p.adjust.method = "bonferroni", 
-                    pool.sd = F)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-#group variation aspect (iii)
-### End of statistical analysisi on individual  indices ###
-
-#This is an anova per river group and parameter, 
-#I calculated the percentage of error that was 
-#coming from within groups (so for the season, in my case). 
-#For that I just divided the sum sq coming from season by the total one (coming from site and season) 
+##### 6. Printing F test and t-test results for DOM composition CV values #####
+F_test_list <- list()
+t_test_list <- list()
+t_test_letters <- list()
+for (variable_name in names(CV_results)) {
+    F_test_list[[variable_name]] <- CV_results[[variable_name]]$F_test
+    t_test_list[[variable_name]] <- CV_results[[variable_name]]$t_test
+    t_test_letters[[variable_name]] <- CV_results[[variable_name]]$t_test_Letters
+  }
+F_test_list
+t_test_list
+t_test_letters
+#### End of mean and CV calculations ####
 
 ##### PCA data prep ####
 data_sum$campaign <- factor(x = data_sum$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"), labels = c("Oct", "Dec", "Feb", "Apr", "May", "Aug"))
@@ -337,85 +221,19 @@ for(i in seq_along(group_types)){
 
 #### PCA with automated prcomp calcualted rotations ####
 PCAloadings <- data.frame(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
-ggplot(data_sum, aes(x = wine.pca$x[,1], y = wine.pca$x[,2])) +
-  geom_point(aes(color = data_sum$groups.y, fill = data_sum$groups.x, shape = data_sum$groups.x),  size = 4) +
-  scale_shape_manual(values = c(15,16,17,18)) +
-  scale_fill_manual(values = c("#942D0A", "#E65525", "#043005","#4F9608", "red", "blue")) +
-  geom_segment(data = PCAloadings, aes(x = 0, y = 0, xend = (PC1*10),
-                                       yend = (PC2*10)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  annotate("text", x = (PCAloadings$PC1*10.4), y = (PCAloadings$PC2*10.4), label = PCAloadings$Variables) +
-  theme_classic() +
-  guides(fill = "legend") +
-  #theme(legend.position = c(-1,0))+
-  labs(color = "Sites", x = "PC 1 (32%)", y = "PC 2 (20%)", title = "PCA of PARAFAC Components and Other Optical Parameters")
+source("analysis/multivariate_pca_plots.R")
 
-####  polygon plots #### 
-xlim <- c(-7.5, 7.5)
-ylim <- c(-7.5, 7.5)
-par(mfrow = c(2,2), mai = c(0.5,0.5,0.3,0.3))
-
-plot_TempNat <- plot(wine.pca$x[, c(1:2)], type = "n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) #, main = "Natural Atlantic"
-ordi_TempNat <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site ,display = "sites",draw = "polygon", label = F, show.groups = group_list[[2]]$site,
-                         alpha = 0.7, col = c("#B4DCED"))
-abline(v = 0, h = 0, lty = 2)
-
-#text(x=-5.5, y=5.5,labels="B", cex=1.7)
-
-plot_TempAlt <- plot(wine.pca$x[, c(1:2)], type="n",  ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) #main = "Altered Atlantic",
-ordi_TempAlt <- ordihull(ord = wine.pca$x[,c(1:2)],groups = data_sum$site ,display = "sites",draw="polygon", label = F, show.groups = group_list[[1]]$site,
-                         alpha = 0.7, col = c('#6996D1'))
-abline(v = 0, h = 0, lty = 2)
-
-#text(x=-5.5, y=5.5, labels="A", cex=1.7)
-
-plot_MedNat <- plot(wine.pca$x[, c(1:2)], type="n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) # main = "Natural Mediterranean",
-ordi_MedNat <- ordihull(ord = wine.pca$x[, c(1:2)],groups = data_sum$site ,display = "sites",draw = "polygon", label = F, show.groups = group_list[[4]]$site,
-                        alpha = 0.7, col = c('#F5CB7D'))
-abline(v = 0, h = 0, lty = 2)
-
-#text(x=-5.4, y=5.5, labels="D", cex=1.7)
-
-plot_MedAlt <- plot(wine.pca$x[, c(1:2)], type = "n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis =1.25) #, main = "Altered Mediterranean"
-ordi_MedAlt <- ordihull(ord = wine.pca$x[,c(1:2)],groups = data_sum$site ,display = "sites",draw = "polygon", label = F, show.groups = group_list[[3]]$site,
-                        alpha = 0.7, col = c("#F09E41"))
-abline(v = 0, h = 0, lty = 2)
-
-#text(x=-5.5, y=5.5, labels="C", cex=1.7)
-
-par(mfrow = c(1,1))
-
-grDevices::pdf('output/plots/PCA_ploygons2.png', width = 19, height = 20)
-#PCA_polygons
-
-dev.off()
-
-summary(ordi_MedNat)
-summary(ordi_MedAlt)
-
-#### Pipeline 2 for the statistical tests ####
-## Pipeline 2 aspect (i) - Annual mean of centroid location
-
-assign(paste0("centroid_",  group_list[[1]][1, groups]), 
-       do.call(rbind.data.frame, lapply(ordi_TempAlt, centroid)
+# Centroid data (longitude and latitude) is extracted from here and named with centroid_<name>, and stored as a data.table within centroid
+for(i in seq_along(group_list)){
+assign(paste0("centroid_",  group_list[[i]][1, groups]), 
+       do.call(rbind.data.frame, lapply(get(paste0("ordi_", (group_list[[i]][1, groups]))), centroid)
 ))
-
-assign(paste0("centroid_",  group_list[[2]][1,groups]), 
-       do.call(rbind.data.frame, lapply(ordi_TempNat, centroid)
-       ))
-
-assign(paste0("centroid_",  group_list[[3]][1,groups]), 
-       do.call(rbind.data.frame, lapply(ordi_MedAlt, centroid)
-       ))
-
-assign(paste0("centroid_",  group_list[[4]][1,groups]), 
-       do.call(rbind.data.frame, lapply(ordi_MedNat, centroid)
-       ))
+}
 
 centroids = data.table(rbind(centroid_MedAlt, centroid_MedNat, centroid_TempAlt, centroid_TempNat), keep.rownames="site")
 centroids = data.table(merge(centroids, site_info, by="site")) # Can also do this whole thing with summary(ordi_MedNat)
 
-#Pipeline 2 aspect (ii) - temporal distance to centroid location
-# Alternative A: using the polygon area as a temporal dispersion proxy. 
+# The plots also produce ordihull objects that has the area which can be accessed with eg: summary(ordi_MedNat) 
 polygon_data = data.table(t(cbind(summary(ordi_MedNat), summary(ordi_MedAlt), summary(ordi_TempAlt), summary(ordi_TempNat))), keep.rownames = "site")
 polygon_data = merge(polygon_data, site_info, by = "site")
 
@@ -536,7 +354,6 @@ gb_te = adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method 
 
 gb_nat = adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
 
-modules::use("R")
 mean_DOM_composition_results = rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
 
 colnames = c("Test", "flow_regime", "nA-nM", "nA-aA", "aM-aM")

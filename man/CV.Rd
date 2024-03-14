@@ -10,6 +10,9 @@ CV(x)
 \arguments{
 \item{x}{data vector from which the coefficient of variation (CV) will be calculated}
 }
+\value{
+the coefficients of variation
+}
 \description{
 Coefficient of Variation (CV) calculation
 Calculates by dividing the mean with the standard deviation

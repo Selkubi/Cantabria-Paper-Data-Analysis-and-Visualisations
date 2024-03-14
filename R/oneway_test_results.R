@@ -13,16 +13,17 @@
 #' @examples 
 oneway_test_results <- function(data, response_variable, grouping_factor, log_normalise){
   # Check if the specified columns exist in the dataset
-  if (sum(as.character(c(response_variable, grouping_factor)) %in% names(data)) < 2) {
+  if (length(setdiff(c(response_variable, grouping_factor), names(data))) > 0) {
     stop("Specified column(s) not found in the dataset.")
   }
-  data.table::setDF(data)
-  
-if (log_normalise == F) {
-  results = bartlett_oneway(data[, response_variable], data[, grouping_factor])
-} else if (log_normalise == T) {
-  results = bartlett_oneway(log(data[, response_variable]), data[, grouping_factor])
-} else {"Define log normalisation"}
+
+if (log_normalise == FALSE) {
+  results = bartlett_oneway(data[[response_variable]], data[[grouping_factor]])
+} else if (log_normalise == TRUE) {
+  results = bartlett_oneway(log(data[[response_variable]]), data[[grouping_factor]])
+} else {
+  stop("Define log normalisation")
+  }
 
 
 results_table = data.table::data.table(
@@ -31,7 +32,6 @@ results_table = data.table::data.table(
   F_value = signif(c(results[[1]]$statistic, results[[2]]$statistic), 2),
   df_value = c(results[[1]]$parameter, paste0(signif(results[[2]]$parameter[1],1), ":", signif(results[[2]]$parameter[2], 1)))
 )
-data.table::setDT(data)
 return(results_table)
 }
 

@@ -3,11 +3,11 @@
 #' 
 #' @param x data vector from which the coefficient of variation (CV) will be calculated
 #'
-#' @return
-#' @export a the coefficient of variation
+#' @return the coefficients of variation
+#' @export 
 #'
 #' @examples
 CV = function(x){
   coeff = sd(x, na.rm = T)/mean(x, na.rm = T)
-  print(coeff)
+  return(coeff)
 }

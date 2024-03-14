@@ -9,7 +9,7 @@
 bartlett_oneway = function(x, y){
   bartlett_result <- stats::bartlett.test(x ~ y)
   
-  oneway_result <- if(bartlett_result$p.value > 0.05) {
+  oneway_result <- if(bartlett_result$p.value >= 0.05) {
     # var.equal is TRUE if bartlett result p > 0.05
     stats::oneway.test(x ~ y, var.equal = T)
   } else { 
