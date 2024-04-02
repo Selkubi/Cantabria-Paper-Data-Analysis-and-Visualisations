@@ -5,8 +5,6 @@ library(mdatools)
 library(data.table)
 library(ggplot2)
 
-source("R/Component_analysis_pipeline_paper_3.R")
-
 #### Hydrological Indices Analysis ####
 magnitude_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group1.csv")
 magnitude_duration_extreme_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group2.csv")
@@ -173,6 +171,13 @@ dev.off()
 shapiro.test((data$X95))
 hist(data$sd7HF)
 boxplot(data$sd7HF)
+
+indice_results <- vector("list", length = length(names(data[, -c(1:4)])))
+names(indice_results) <-  names(data[, -c(1:4)])
+for(i in seq_along(data[,-c(1:4)])) {
+  names(indice_results[i]) <- names(data[, -c(1:4)])[i]
+  indice_results[[i]] <- statistics_pipeline_wrapper(data, names(data[,-c(1:4)])[i], "groups", log_normalise = T)
+} 
 
 bartlett.test((X95)~groups, data = data)
 oneway.test((X95)~groups, var.equal = F, data = data)

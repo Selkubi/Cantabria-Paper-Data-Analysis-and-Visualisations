@@ -29,10 +29,10 @@ statistics_pipeline_wrapper <- function(data, response_variable, grouping_factor
                                                   Mediterranean = results_table$Mediterranean$p_value[2]),
                                        method = "bonferroni", n = 3)
     
-    adjusted_p_values <- data.table("value" = c("p_values", "F_values", "df_value"),
+    adjusted_p_values <- data.table("value" = c("p_values", "t_values", "df_value"),
                "Natural" = c(adjusted_p_values[["Natural"]], results_table$Natural[2,3:4]),
-               "Temperate" = c(adjusted_p_values[["Temperate"]], results_table$Natural[2,3:4]),
-               "Mediterranean" = c(adjusted_p_values[["Mediterranean"]], results_table$Natural[2,3:4]))
+               "Temperate" = c(adjusted_p_values[["Temperate"]], results_table$Temperate[2,3:4]),
+               "Mediterranean" = c(adjusted_p_values[["Mediterranean"]], results_table$Mediterranean[2,3:4]))
   }
   else if(mean_table[2]$p_value >= 0.05){
     
@@ -55,7 +55,8 @@ statistics_pipeline_wrapper <- function(data, response_variable, grouping_factor
   } 
   else if(mean_table[pair == "bartlett_results(K_val)"]$p_value >= 0.05){
     
-    F_results_table <- matrix(c("-", "-","-"), nrow = 1, ncol = 3, dimnames = list(c("F_test_p_values"), c("Natural", "Temperate", "Mediterranean")))
+    F_results_table <- matrix(c("-", "-","-"), nrow = 1, ncol = 3, dimnames = list(c("F_test_p_values"), 
+                                                                                   c("Natural", "Temperate", "Mediterranean")))
   }
   else {stop}
   

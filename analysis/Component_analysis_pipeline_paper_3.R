@@ -8,11 +8,11 @@
 #### The functions to be used are here, but first you have to load the project package
 roxygen2::roxygenize()
 
-#### 1. Data Cleaning ####
-source("analysis/Data_Cleaning.R")
+##### 1. Data Cleaning #####
+source("analysis/01_data_cleaning.R")
 
 ##### 2. DOC Mean and CV plots #####
-source("analysis/DOC_DOM_plots.R")
+source("analysis/02_DOC_DOM_plots.R")
 
 mean_NPOC 
 
@@ -44,7 +44,7 @@ oneway_test_results(DOC_sum, "mean_NPOC", "groups", log_normalise = T)
 statistics_pipeline_wrapper(DOC_sum, "mean_NPOC", "groups", log_normalise = T)
 multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["mean_NPOC"]]$p.value))$Letters
 
-####  4. Statistical tests for DOC concentration CV values ####
+#####  4. Statistical tests for DOC concentration CV values #####
 shapiro.test(log(DOC_sum$var_NPOC))
 hist(log(DOC_sum$var_NPOC))
 boxplot(log((DOC_sum$var_NPOC)))
@@ -195,9 +195,8 @@ t_test_list
 t_test_letters
 #### End of mean and CV calculations ####
 
-##### PCA data prep ####
+##### 7. PCA data prep #####
 data_sum$campaign <- factor(x = data_sum$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"), labels = c("Oct", "Dec", "Feb", "Apr", "May", "Aug"))
-
 pca_data <- data_sum[, .(alteration, Class,groups.x,
              HIX2, FIX, beta.alpha, SR_Loiselle,
              E2.to.E3, SUVA254,
@@ -219,10 +218,12 @@ for(i in seq_along(group_types)){
   group_list[[i]] =  site_info[groups == group_types[[i]], c("site", "Class", "alteration", "groups", "Alteration_type", "Catchment")]
 }
 
-#### PCA with automated prcomp calcualted rotations ####
+##### 8. PCA polygon plots #####
 PCAloadings <- data.frame(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
-source("analysis/multivariate_pca_plots.R")
+source("analysis/03_PCA_polygon_plots.R")
+dev.off()
 
+##### 9. PCA PC1 and PC2 centroid calculations #####
 # Centroid data (longitude and latitude) is extracted from here and named with centroid_<name>, and stored as a data.table within centroid
 for(i in seq_along(group_list)){
 assign(paste0("centroid_",  group_list[[i]][1, groups]), 
@@ -230,240 +231,102 @@ assign(paste0("centroid_",  group_list[[i]][1, groups]),
 ))
 }
 
-centroids = data.table(rbind(centroid_MedAlt, centroid_MedNat, centroid_TempAlt, centroid_TempNat), keep.rownames="site")
-centroids = data.table(merge(centroids, site_info, by="site")) # Can also do this whole thing with summary(ordi_MedNat)
+centroids <- data.table(rbind(centroid_MedAlt, centroid_MedNat, centroid_TempAlt, centroid_TempNat), keep.rownames = "site")
+centroids <- data.table(merge(centroids, site_info, by = "site")) # Can also do this whole thing with summary(ordi_MedNat)
 
 # The plots also produce ordihull objects that has the area which can be accessed with eg: summary(ordi_MedNat) 
-polygon_data = data.table(t(cbind(summary(ordi_MedNat), summary(ordi_MedAlt), summary(ordi_TempAlt), summary(ordi_TempNat))), keep.rownames = "site")
-polygon_data = merge(polygon_data, site_info, by = "site")
+polygon_data <- data.table(t(cbind(summary(ordi_MedNat), summary(ordi_MedAlt), summary(ordi_TempAlt), summary(ordi_TempNat))), keep.rownames = "site")
+polygon_data <- merge(polygon_data, site_info, by = "site")
 
-PCA_results = cbind(wine.pca$x[, c(1:2)], pca_data)
+PCA_results <- cbind(wine.pca$x[, c(1:2)], pca_data)
 
-# var of PC axes
-PC_info = merge(PCA_results[, .(mean_PC1 = mean(PC1, na.rm = TRUE), mean_PC2 = mean(PC2, na.rm = TRUE), 
+# complete dataset of PCA information
+PC_info <- merge(PCA_results[, .(mean_PC1 = mean(PC1, na.rm = TRUE), mean_PC2 = mean(PC2, na.rm = TRUE), 
                                 var_PC1 = var(PC1), var_PC2 = var(PC2)), by = .(site)], 
                 site_info[, c("site", "Class", "alteration", "groups")])
 
-#Statistical results of the PC1 aspect (i)
+##### 10. Statistical tests on PCA polygons #####
+# Mean of PC1
 shapiro.test((PC_info$mean_PC1))
 hist((PC_info$mean_PC1))
 boxplot((PC_info$mean_PC1))
-qqnorm((PC_info$mean_PC1),main = "Normal Q-Q Plot");qqline((PC_info$mean_PC1)) 
 
-bartlett.test(mean_PC1~groups, data = PC_info)
-oneway.test(mean_PC1~groups, var.equal = T, data = PC_info)
+# Calculate the pairwise t-test for all 4 variables
+pairwise_results_mean <- lapply(PC_info[, c(2:5)], pairwise.t.test, DOC_sum$groups, p.adjust.methods = "bonferroni", pool.sd = T)
 
-var.test(mean_PC1~alteration, data = PC_info[Class == "Mediterranean"])
-t.test(mean_PC1~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
+oneway_test_results(PC_info, "mean_PC1", "groups", log_normalise = F)
+statistics_pipeline_wrapper(PC_info, "mean_PC1", "groups", log_normalise = F)
+#multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["mean_PC1"]]$p.value))$Letters
 
-var.test(mean_PC1~alteration, data = PC_info[Class == "Temperate"])
-t.test(mean_PC1~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
-
-var.test(mean_PC1~Class, data = PC_info[alteration == "Natural"])
-t.test(mean_PC1~Class, data = PC_info[alteration == "Natural"], var.equal = T)
-
-p.adjust(c( 0.03377, 0.0004782,  0.8223), method = "bonferroni", n = 3)
-
-
-#CV of PC1 aspect (ii)
+# CV of PC1
 shapiro.test((PC_info$var_PC1))
 hist((PC_info$var_PC1))
 
-bartlett.test((var_PC1)~groups, data = PC_info)
-oneway.test((var_PC1)~groups, var.equal = T, data = PC_info)
+oneway_test_results(PC_info, "var_PC1", "groups", log_normalise = F)
+statistics_pipeline_wrapper(PC_info, "var_PC1", "groups", log_normalise = F)
 
-var.test((var_PC1)~alteration, data = PC_info[Class == "Mediterranean"])
-t.test((var_PC1)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
-
-var.test((var_PC1)~alteration, data = PC_info[Class == "Temperate"])
-t.test((var_PC1)~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
-
-var.test((var_PC1)~Class, data = PC_info[alteration == "Natural"])
-t.test((var_PC1)~Class, data = PC_info[alteration == "Natural"], var.equal = T)
-
-p.adjust(c(0.1603, 0.01589,  0.0496), method="bonferroni", n = 3)
-
-m = pairwise.t.test(log(PC_info$var_PC1), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-
-multcompView::multcompLetters(fullPTable(m$p.value), , threshold = 0.07)
-
-#Statistical results of the PC2 aspect (i)
+# Mean of PC2
 shapiro.test((PC_info$mean_PC2))
 hist((PC_info$mean_PC2))
 
-bartlett.test(mean_PC2~groups, data = PC_info)
-oneway.test(mean_PC2~groups, var.equal = F, data = PC_info)
+oneway_test_results(PC_info, "mean_PC2", "groups", log_normalise = F)
+statistics_pipeline_wrapper(PC_info, "mean_PC2", "groups", log_normalise = F)
 
-var.test(mean_PC2~alteration, data = PC_info[Class == "Mediterranean"])
-t.test((mean_PC2)~groups, data = PC_info[Class == "Mediterranean"], var.equal = T)
-
-var.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"])
-t.test(mean_PC2~alteration, data = PC_info[Class == "Temperate"], var.equal = T)
-
-var.test(mean_PC2~Class, data = PC_info[alteration == "Natural"])
-t.test(mean_PC2~Class, data = PC_info[alteration == "Natural"], var.equal = T)
-
-p.adjust(c(0.8163,  0.0004782, 0.03377), method = "bonferroni", n = 3)
-
-m = pairwise.t.test(PC_info$mean_PC2, PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-
-#CV of PC2 aspect (ii)
+# CV of PC2
 shapiro.test(log(PC_info$var_PC2))
 hist(log(PC_info$var_PC2))
 
-bartlett.test(log(var_PC2)~groups, data = PC_info)
-oneway.test(log(var_PC2)~groups, var.equal = T, data=PC_info)
+# The var_PC2 value needs to be log transformed, so we re-do the pairwise test for the letters
+pairwise_results_var_PC2 <- lapply(log(PC_info[, c(5)]), pairwise.t.test, DOC_sum$groups, p.adjust.methods = "bonferroni", pool.sd = T)
 
-var.test(log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"])
-t.test( log(var_PC2)~alteration, data = PC_info[Class == "Mediterranean"], var.equal = T)
+oneway_test_results(PC_info, "var_PC2", "groups", log_normalise = T)
+statistics_pipeline_wrapper(PC_info, "var_PC2", "groups", log_normalise = T)
+# Do for the exact p value which is < 0.05 var.test(log(var_PC2)~groups, data = PC_info[Class == "Temperate"])
 
-var.test( log(var_PC2)~alteration, data = PC_info[Class == "Temperate"])
-t.test(log(var_PC2)~alteration, data = PC_info[Class == "Temperate"], var.equal = F)
+##### 11. Global test results of the PCA including all of the PC axis #####
+betas_PC_all <- betadisper(vegdist((wine.pca$x[,1:10]), method = "euclidean"),group = pca_data$site, type="centroid")
+disp_PC_all <- tapply(betas_PC_all[["distances"]], betas_PC_all[["group"]], mean)
+Multi_centroid <- data.table(cbind(disp_PC_all, betas_PC_all[["centroids"]], match(rownames(betas_PC_all[["centroids"]]), rownames(disp_PC_all))), keep.rownames = "site")
+Multi_centroid <- Multi_centroid[site_info, on = .(site)]
 
-var.test( log(var_PC2)~Class, data = PC_info[alteration == "Natural"])
-t.test( log(var_PC2)~Class, data = PC_info[alteration == "Natural"], var.equal = F)
+# Mean centroid of all PC axis
+gb_fr <- adonis2(vegdist(Multi_centroid[,3:12], method = "euclidian")~Multi_centroid$groups, permutations = 100000)
+gb_me <- adonis2(vegdist(Multi_centroid[Class == "Mediterranean", c(3:12)], method = "euclidian")~alteration, data = Multi_centroid[Class == "Mediterranean"], permutations = 100000)
+gb_te <- adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method = "euclidian")~alteration, data = Multi_centroid[Class == "Temperate"], permutations = 100000)
+gb_nat <- adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
 
-p.adjust(c(0.6973, 0.0003826,    0.1542), method = "bonferroni", n = 3)
+mean_DOM_composition_results <- rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
 
-m = pairwise.t.test(log(PC_info$var_PC2), PC_info$groups, p.adjust.method = "bonferroni", pool.sd = F, paired = F)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-
-# Alternative B: using the  average of individual sampling distances to the centroid of each polygon as a proxy for temporal dispersion
-#ordi_all=c(ordi_MedAlt, ordi_MedNat, ordi_TempAlt, ordi_TempNat)
-
-site_info = site_info[site_info$site != "Carrion",]
-
-# Calculating the centroid for all the PC axis
-
-betas_PC_all = betadisper(vegdist((wine.pca$x[,1:11]), method = "euclidean"),group = pca_data$site, type="centroid")
-disp_PC_all = tapply(betas_PC_all[["distances"]], betas_PC_all[["group"]], mean)
-
-#### Centroid with all PC axes ####
-Multi_centroid = data.table(cbind(disp_PC_all, betas_PC_all[["centroids"]], match(rownames(betas_PC_all[["centroids"]]), rownames(disp_PC_all))), keep.rownames = "site")
-Multi_centroid = Multi_centroid[site_info, on = .(site)]
-
-# These correspond to the "Mean DOM composotion" for the Global Tests on Dispersion table. 
-gb_fr = adonis2(vegdist(Multi_centroid[,3:12], method = "euclidian")~Multi_centroid$groups, permutations = 100000)
-
-gb_me = adonis2(vegdist(Multi_centroid[Class == "Mediterranean", c(3:12)], method = "euclidian")~alteration, data = Multi_centroid[Class == "Mediterranean"], permutations = 100000)
-
-gb_te = adonis2(vegdist((Multi_centroid[Class == "Temperate", c(3:12)]), method = "euclidian")~alteration, data = Multi_centroid[Class == "Temperate"], permutations = 100000)
-
-gb_nat = adonis2(vegdist((Multi_centroid[alteration == "Natural",c(3:12)]), method = "euclidian")~Class, data = Multi_centroid[alteration == "Natural"], permutations = 10000)
-
-mean_DOM_composition_results = rbind(get_adonis_results(gb_fr), do_bonferroni_to_adonis(gb_nat, gb_te, gb_me))
-
-colnames = c("Test", "flow_regime", "nA-nM", "nA-aA", "aM-aM")
-mean_DOM = c("F" = gb_fr[["F"]][1])
-
-#not putting the p adjustd values becaues these are F test-like p values
-p.adjust(c(0.07102,  0.2437, 0.1165), method = "bonferroni", n = 3)
-
-# Temporal dispersion with all PC axes 
+# Temporal dispersion (CV equivalent) of all PC axis
 shapiro.test(log(Multi_centroid$disp_PC_all))
 hist(log(Multi_centroid[Class == "Temperate"]$disp_PC_all))
-qqnorm(log(Multi_centroid$disp_PC_all), main="Normal Q-Q Plot of male");qqline(log(Multi_centroid$disp_PC_all))
+qqnorm(log(Multi_centroid$disp_PC_all), main="Normal Q-Q Plot of male");qqline((Multi_centroid$disp_PC_all))
 
-bartlett.test(log(disp_PC_all)~groups, data = Multi_centroid)
-oneway.test(log(disp_PC_all)~groups, var.equal = T, data = Multi_centroid)
+oneway_test_results(Multi_centroid, "disp_PC_all", "groups", log_normalise = T)
+statistics_pipeline_wrapper(Multi_centroid, "disp_PC_all", "groups", log_normalise = T)
 
-var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"])
-t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Mediterranean"], var.equal = T)
-
-var.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Temperate"])
-t.test(log(disp_PC_all)~alteration, data = Multi_centroid[Class == "Temperate"], var.equal = T)
-
-var.test(log(disp_PC_all)~Class, data = Multi_centroid[alteration == "Natural"])
-t.test(log(disp_PC_all)~Class, data = Multi_centroid[alteration == "Natural"], var.equal = T)
-
-p.adjust(c(0.1079,  0.00273,  0.6857), method = "bonferroni", n = 3)
-m = pairwise.t.test(log(Multi_centroid$disp_PC_all), Multi_centroid$groups, p.adjust.method = "bonferroni", pool.sd = F)
-multcompView::multcompLetters(fullPTable(m$p.value))
-
-# Aspect (iii): mvd
+# Among river variation of mean DOM composition (dispersion of river centroids)
 summary(aov(betadisper(vegdist((Multi_centroid[, c(3:12)]), method = "euclidian"), Multi_centroid$groups)$distances~Multi_centroid$groups))
-
-# Aspect extra
-river_centroid_dispersions = betadisper(vegdist(Multi_centroid[,3:12], method = "euclidian"), group = Multi_centroid$groups, type="centroid")
-river_centroid_dispersions_sites = data.table(cbind(river_centroid_dispersions=river_centroid_dispersions[["distances"]], 
-                                                                             site = Multi_centroid[["site"]],
-                                                                             groups = Multi_centroid[["groups"]],
-                                                                             alteration = Multi_centroid[["alteration"]],
-                                                                             Class = Multi_centroid[["Class"]]))
-
-summary(aov(river_centroid_dispersions_sites[Class == "Temperate"]$river_centroid_dispersions~river_centroid_dispersions_sites[Class == "Temperate"]$groups))
-summary(aov(river_centroid_dispersions_sites[Class == "Mediterranean"]$river_centroid_dispersions~river_centroid_dispersions_sites[Class == "Mediterranean"]$groups))
-summary(aov(river_centroid_dispersions_sites[alteration == "Natural"]$river_centroid_dispersions~river_centroid_dispersions_sites[alteration == "Natural"]$groups))
-
-# Manuel calculations of multidimensional PCA centroid
-pca_results = cbind(pca_data, wine.pca$x)
-manuel_centroid = aggregate(x = pca_results[, c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", "PC10", "PC11")], by = pca_results[,c("site")], FUN = mean)
-manuel_centroid = data.table(cbind(manuel_centroid, site_info, by = "site"))
-
-#### Centroid with all PC axes end ####
-
-disp_all = as.data.table(data.frame(disp_PC_all), keep.rownames = "site")
-disp_all = merge(disp_all, unique(pca_data[, c("site", "groups.x", "Class", "alteration")]), by = "site")
-
-disp_melted = melt(disp_all, id.vars = c("site", "groups.x", "Class", "alteration"), measure.vars = c("disp_PC_all"))
-
-formula <- lm(formula = disp_PC2~groups.x, data = disp_all[disp_all$Class == "Temperate", ])
-
-pl = ggplot(data = disp_melted[variable == "disp_PC_all"], aes(x = groups.x, y = value)) + 
-  theme(axis.line.x =  element_line(color="black"),axis.line.y =  element_line(), panel.grid = element_blank(), panel.background = element_blank())+
-  geom_boxplot(aes(x = groups.x, y = value, fill = groups.x), outlier.size = 0.5, lwd = 0.2)+
- # geom_point(aes(fill=groups.x, shape=groups.x),fill="black", size=3)+
-  #facet_wrap(~variable,  labeller=as_labeller(c(disp_PC1="PC1", disp_PC2="PC2", disp_PC_all="Dispersion on the 2 PC space")))+
-  labs(y = "Dispersion", x = NULL)+
-  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("aM", "nM", "aA", "nA")) +
-  theme_pca + theme(legend.title = element_blank(), legend.position = "bottom") + scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM",
-
-                                                                                                        "TempAlt" = "aA", "TempNat" = "nA"))+
-  scale_shape_manual(values = c(23,22,25,24))+
-  theme(panel.background = element_rect(fill = NA), strip.background.x = element_rect(fill="white"), strip.text = element_text(size = 11), axis.title = element_text(size = 11))+
-  theme(text = element_text(size = 11),axis.text = element_text(size = 11, color = "black"), axis.text.x = element_text(hjust = 1),
-        axis.title=element_blank(), legend.position = "none", strip.placement ="outside", strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"))
-
+##### 12. PCA Mean/Dispersion boxplots ####
+source("analysis/04_PCA_axis_plots.R")
+pl
+individual_pc1 
+individual_pc2 
 
 pdf('output/plots/PCAll.pdf', width = 2.4, height = 2.5)
 plot(pl)
 dev.off()
 
-pca_results$groups.x = factor(pca_results$groups.x, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
-
-individual_pc1 = ggplot(data = pca_results, aes(x=groups.x, y=PC1)) + 
-  theme(axis.line.x =  element_line(color="black"),axis.line.y =  element_line(), panel.grid = element_blank(), panel.background = element_blank())+
-  geom_boxplot(aes(x=groups.x, y=PC1,  fill=groups.x, group=reorder(site, PC1, median)),  lwd = 0.2, outlier.size = 0.5)+
-  labs(y="Axis locations", x=NULL)+scale_y_continuous(limits=c(-4,7.5))+
-  scale_fill_manual(values =c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
-  theme_pca +theme(legend.title=element_blank(), legend.position = "bottom")+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  theme(panel.background = element_rect(fill = NA), axis.title = element_text(size=11))+
-  theme(text = element_text(size=11),axis.text=element_text(size=11, color="black"),
-        axis.title=element_text(size=11), legend.position = "none")+ylab("PC1")
-
-individual_pc2 = ggplot(data = pca_results, aes(x=groups.x, y=PC2)) + 
-  theme(axis.line.x =  element_line(color="black"),axis.line.y =  element_line(), panel.grid = element_blank(), panel.background = element_blank())+
-  geom_boxplot(aes(x=groups.x, y=PC2, fill=groups.x, group=reorder(site, PC2, median)),lwd=0.2, outlier.size=0.5)+
-  labs(y="Axis locations", x=NULL)+
-  scale_fill_manual(values =c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
-  theme_pca +theme(legend.title=element_blank())+scale_x_discrete(labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  scale_shape_manual(values=c(23,22,25,24))+scale_y_continuous(limits=c(-5,7.5))+
-  theme(panel.background = element_rect(fill = NA), axis.title = element_text(size=11))+
-  theme(text = element_text(size=11),axis.text=element_text(size=11, color="black"),
-        axis.title=element_text(size=11), legend.position = "none")+ylab("PC2")
-
 pdf('output/plots/PC1.pdf', width = 4, height = 4)
 plot(individual_pc1)
 dev.off()
+
 pdf('output/plots/PC2.pdf', width = 4, height = 4)
 plot(individual_pc2)
 dev.off()
 
 
-#### data reflection onto the PCA space ####
+##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
 PCA_rot <- data.table(t(cor(PCA_scores[,c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
 
@@ -474,7 +337,6 @@ eigenvec12<-cbind(wine.pca$rotation[,1],wine.pca$rotation[,2])
 PCAloadings<-data.frame(cor(pca_data[,-(1:5)],pca.scores))
 PCAloadings$Variables=rownames(PCAloadings)
 
-### PCA plots #### 
 MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
 MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
 TempAlt <- PCA_scores[PCA_scores$groups == "TempAlt", ][chull(PCA_scores[PCA_scores$groups == "TempAlt", c("PC1", "PC2")]), ]  # hull values for grp A
@@ -482,92 +344,31 @@ TempNat <- PCA_scores[PCA_scores$groups == "TempNat", ][chull(PCA_scores[PCA_sco
 
 hull.data <- rbind(MedAlt, MedNat,TempAlt,TempNat)  #combine grp.a and grp.b
 hull.data
-# title="PCA of PARAFAC Components and Other Optical Parameters"
-plot_all <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  geom_point(aes(color=data_sum$groups.x, fill=data_sum$groups.x, shape=data_sum$groups.x), size=2.5, colour="black")+
-  scale_shape_manual(values=c(23,22,25,24))+
-  scale_fill_manual(values=c("#942D0A","#E65525", "#043005","#4F9608"))+
-  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1*8), yend = (PC2*8)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  annotate("text", x = (PCA_rot$PC1*8), y = (PCA_rot$PC2*8),label = PCA_rot$Variables, size=4, color="black")+
-  labs(color="Sites", x="PC1 (44.2.8%)", y="PC2 (15.6%)", tag = "a. Loadings and sites")+
-  theme_pca()+ 
-  theme(plot.tag.position=c(0.24,0.97))+
-  scale_x_continuous(limits=c(-8,8), n.breaks=10)+
-  scale_y_continuous(limits=c(-8,8), n.breaks=10)+
-  #guides(fill="legend")+
-  #theme(legend.position = c(-1,0))+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)
 
-hull.data$groups=factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+# PCA with all the data
+source("analysis/05_PCA_plots.R")
+plot_all
 
-plot_points <- ggplot(pca_results, aes(x = wine.pca$x[, 1], y = wine.pca$x[, 2]))+
-  geom_polygon(data = hull.data, mapping=aes(x = PC1, y = PC2,color = groups, group = groups), fill = NA,lwd = 1, alpha = 0.7)+
-  geom_point(aes(fill = pca_results$groups.x, shape=pca_results$groups.x), size=1, alpha=0.7,  color="black", stroke=0.25)+
-  scale_shape_manual(values=c(23,22,25,24), labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  scale_fill_manual(values=c( "#B4DCED",'#6996D1','#F5CB7D','#F09E41'), labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  scale_color_manual(values =c( "#B4DCED",'#6996D1','#F5CB7D','#F09E41'), labels=c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  labs(color="Sites", x="PC1 (44%)", y="PC2 (16%)")+ #, tag = "A"
-  theme_pca()+
-  theme(plot.tag.position=c(0.15,0.96))+
-  scale_x_continuous(limits=c(-7.5,7.5), n.breaks=10)+
-  scale_y_continuous(limits=c(-7.5,7.5), n.breaks=10)+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
-  theme(legend.title = element_blank(),legend.position = "none", text=element_text(size=11))+
-  theme(axis.text =  element_text(size=11, color="black"),axis.title=element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size=5, alpha=1)))
+hull.data$groups <- factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
+plot_points 
 pdf('output/plots/PCA_points.pdf', width = 2.7, height = 2.5)
 plot(plot_points)
 dev.off()
 
-plot_optical <- ggplot(data_sum, aes(x=wine.pca$x[,1], y=wine.pca$x[,2]))+
-  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "black") +
-  annotate("text", x = (PCA_rot$PC1), y = (PCA_rot$PC2),label = PCA_rot$Variables, size=3.5, color="black")+
-  labs(color="Sites", x="PC1 (47.1%)", y="PC2 (13.6%)")+
-  theme_pca()+ 
-  theme(plot.tag.position=c(0.20,0.95))+
-  scale_x_continuous(limits=c(-1,1), n.breaks=10)+
-  scale_y_continuous(limits=c(-1,1), n.breaks=10)+
-  guides(fill="legend")+
-  theme(legend.position = c(-1,0))+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
-  theme(axis.text=element_text(size=25),axis.title=element_text(size=25))+
-  theme(text = element_text(size=11))
-
- PCA_optical = ggplot(data_sum, aes(x = wine.pca$x[,1], y = wine.pca$x[,2]))+
-  geom_segment(data = PCA_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "black", lwd=0.7) +
- #geom_segment(data=LC_OCD_rot, aes(x = 0, y = 0, xend = (PC1), yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),color = "blue", lwd=0.7) + 
-  #annotate("text", x = as.vector(labels_locator2[1:14,1]), y = as.vector(labels_locator[1:14,2]),label =var_names[1:14], size=5, color="black")+
-  # annotate("text", as.vector(labels_locator2[15:17,1]), y = as.vector(labels_locator[15:17,2]), label =var_names[15:17], size=5, color="blue")+
-  labs(color="Sites", x="PC1 (44%)", y="PC2 (16%)")+
-  theme_pca()+ 
-  theme(plot.tag.position=c(0.19,0.95))+
-  scale_x_continuous(limits=c(-1,1), n.breaks=8)+
-  scale_y_continuous(limits=c(-1,1), n.breaks=8)+
-  guides(fill="legend")+
-  theme(legend.position = c(-1,0) )+
-  geom_vline(xintercept = 0, lty=2) + geom_hline(yintercept = 0, lty=2)+
-  theme(text = element_text(size=20),axis.text=element_text(size=20, color = "black"))
- 
+plot_optical # we took out just the loading arrows and put the variable names manually using Inkscape 
+PCA_optical 
  pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
  plot(PCA_optical)
  dev.off()
-#### end ####
+#### End of PCA related calculations and plots ####
 
-#### Hydrological Indices Analysis ####
+#### 14. Hydrological Indices Analysis ####
+source("analysis/Indice_analysis.R")
 
-source("R/indice_analysis.R")
-
-
-#### Loading plots ####
-parafac_em <- read.csv("data/PARAFAC_data/Em.csv")
-parafac_ex<- read.csv("data/PARAFAC_data/Ex.csv")
-ggplot()+
-  geom_line(aes(x=parafac_em$Em,y=(1/3)*(parafac_em$Comp.8)))+
-  geom_line(aes(x=parafac_ex$Ex,y=3*(parafac_ex$Comp.8)), linetype = "dashed")+
-  theme_classic()+
-  labs(title="Comp8")
+#### 14. Loading plots ####
+source("analysis/06_loading_plots.R")
 
 # Hydrological plots
 source("R/hydrological_analysis.R")
-
+ 

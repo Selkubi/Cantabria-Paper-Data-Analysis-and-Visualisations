@@ -25,7 +25,8 @@ t_test_results <- function(data, response_variable, grouping_factor, log_normali
     pair = c("F_test_results(F)", "t_test(t)"),
     p_value = signif(c(results[[1]]$p.value, results[[2]]$p.val), 2),
     F_value = signif(c(results[[1]]$statistic, results[[2]]$statistic), 2),
-    df_value = c(paste0(results[[1]]$parameter[2], ":", results[[1]]$parameter[1]), results[[2]]$parameter)
+    df_value = c(paste0(signif(results[[1]]$parameter[2], 1), ":", signif(results[[1]]$parameter[1]), 2), 
+                signif(results[[2]]$parameter, 1))
   )
   return(results_table)
 }

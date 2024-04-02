@@ -1,7 +1,7 @@
 
 ##### Figure 5 -  Polygon plots #####
 
-png("PCA_polygons.pdf", width = 10, height = 12, units = "in", res = 300)  # Adjust resolution as needed
+#png("PCA_polygons.pdf", width = 10, height = 12, units = "in", res = 300)  # Adjust resolution as needed
 
 xlim <- c(-7.5, 7.5)
 ylim <- c(-7.5, 7.5)
@@ -33,6 +33,6 @@ text(x=-5.5, y=5.5, labels="C", cex=1.7)
 
 par(mfrow = c(1,1))
 
-dev.off()
+#dev.off()
 
 ##### 

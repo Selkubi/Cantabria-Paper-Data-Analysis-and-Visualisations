@@ -45,10 +45,12 @@ meta_component_data = merge(sample_loadings, sample_names, by.x=c("sample_code",
 meta_component_data = meta_component_data[meta_component_data$site!="Carrion",]
 meta_sum_optical = meta_sum_optical[meta_sum_optical$site!="Carrion",]
 sample_names = sample_names[sample_names$site!="Carrion",]
+site_info = site_info[site_info$site != "Carrion",]
 
 ##### Prepping for the DOC mean and variance plots ####
 data_sum = aggregate(meta_component_data[,c("Comp.1","Comp.2","Comp.3","Comp.4","Comp.5","Comp.6","Comp.7","Comp.8")], 
                      by = meta_component_data[, c("campaign", "site")], FUN = mean, na.rm = T)
+
 data_sum = merge(site_info, data_sum, by.x = c("site"), by.y = c("site"))
 data_sum = merge(data_sum, meta_sum_optical[, -c(14, 15)], by = c("site","campaign"))
 data_sum[, "SUVA254" := DecAbsCoeff254/NPOC]
