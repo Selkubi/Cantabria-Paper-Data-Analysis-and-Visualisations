@@ -1,13 +1,15 @@
 library(ggplot2)
 
 ##### Figure 6A -  All PCAs Dispersion #####
+Multi_centroid$groups <- factor(Multi_centroid$groups, 
+                               levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
 pl <- ggplot(data = Multi_centroid, aes(x = groups, y = disp_PC_all)) + 
   geom_boxplot(aes(x = groups, y = disp_PC_all, fill = groups), outlier.size = 0.5, lwd = 0.2) +
   labs(y = "Dispersion", x = NULL) +
-  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'), labels = c("aM", "nM", "aA", "nA")) +
+  scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41')) +
   theme_pca() + 
-  scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA")) +
+  scale_x_discrete(labels = c("TempNat" = "nA",  "TempAlt" = "aA", "MedNat" = "nM", "MedAlt" = "aM")) +
   theme_boxplot()
 
 ##### Figure 6B -  PC1 Dispersion #####
