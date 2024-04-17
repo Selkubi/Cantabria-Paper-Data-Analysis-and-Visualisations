@@ -1,12 +1,7 @@
-# library(vegan)
  library(geosphere)
-# library(gridExtra)
-# library(data.table)
-# library(ggplot2)
-# library(lubridate)
 
-#### The functions to be used are here, but first you have to load the project package
-roxygen2::roxygenize()
+#### The functions to be used are here, but first you have to install package
+remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)
 
 ##### 1. Data Cleaning #####
 source("analysis/01_data_cleaning.R")
