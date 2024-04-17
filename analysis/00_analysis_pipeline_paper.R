@@ -305,7 +305,6 @@ pdf('output/plots/PC2.pdf', width = 4, height = 4)
 plot(individual_pc2)
 dev.off()
 
-
 ##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
 PCA_rot <- data.table(t(cor(PCA_scores[,c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
@@ -351,4 +350,5 @@ source("analysis/06_loading_plots.R")
 
 # Hydrological plots
 source("R/hydrological_analysis.R")
+ 
  
