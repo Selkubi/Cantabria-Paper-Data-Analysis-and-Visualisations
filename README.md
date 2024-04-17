@@ -1,4 +1,4 @@
-# Data processing pipeline for our paper "Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain"
+## Data processing pipeline for our paper "Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain"
 #### Logo
 ### Badges
 
