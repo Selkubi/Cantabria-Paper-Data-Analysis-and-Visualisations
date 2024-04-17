@@ -31,7 +31,7 @@ temperate_DOC = ggplot(data_sum[Class == 'Temperate'], aes(x = campaign, y = NPO
   scale_fill_manual(values=c("#B4DCED", '#6996D1')) +
   scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca +
+  theme_pca() +
   theme(axis.title.x = element_blank())+
   ylab("DOC mg C/L")
 
@@ -48,6 +48,6 @@ mediterranean_DOC = ggplot(data_sum[Class == 'Mediterranean'], aes(x = campaign,
   scale_fill_manual(values=c('#F5CB7D','#F09E41')) +
   scale_x_discrete(limits = c("feb", "may", "oct","apr", "aug", "dec"),
                    labels = c("Feb", "May", "Oct", "Apr", "Aug", "Dec")) +
-  theme_pca+ 
+  theme_pca() + 
   theme(axis.title.x = element_blank())+
   ylab("DOC mg C/L")
