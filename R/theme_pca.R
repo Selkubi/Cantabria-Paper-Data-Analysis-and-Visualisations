@@ -1,4 +1,12 @@
-theme_pca <- ggplot2::theme_bw() +
+
+#' The generic theme for the pca plots
+#'
+#' @return a theme function
+#' @export
+#'
+#' @examples
+theme_pca <- function(){
+  ggplot2::theme_bw() +
   ggplot2::theme(
     text = ggplot2::element_text(size=11),
     axis.title = ggplot2::element_text(size=11),
@@ -11,3 +19,4 @@ theme_pca <- ggplot2::theme_bw() +
     panel.border = ggplot2::element_blank(),
     axis.line.y.right = ggplot2::element_line(color="white"),
     panel.grid = ggplot2::element_blank())
+}
