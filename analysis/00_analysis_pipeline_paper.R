@@ -1,4 +1,4 @@
- library(geosphere)
+library(geosphere)
 library(getting.statistics)
  
 #### The functions to be used are here, but first you have to install package
@@ -52,18 +52,6 @@ multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["var
 #### End of DOC mean and CV ####
 
 #### DOM composition ####
-# data_summary = data_sum[, .(FI2 = (FIX), HI2= (HIX2), 
-#                           beta.alpha2 = (beta.alpha ), SUVA254_2 = (SUVA254),
-#                           SR = (SR_Loiselle ), E2toE3 = (E2.to.E3 ),
-#                           C_HMWS = (HMWS_C/CDOC), C_LMWS = (LMWS_C/CDOC),
-#                           C_HS = (humic_like_substance_C/CDOC ),
-#                           C_terrestrial = ((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot),
-#                           C_protein = ((Comp.6 + Comp.7 + Comp.8) / C_tot)),
-#                           by = .(site, alteration, Class,  groups.x, campaign)]
-
-#data_summary[data_summary[, C_HMWS > 0.3]]$C_HMWS = NA
-#data_summary[data_summary[, C_HS > 1.5]]$C_HS = NA
-
 data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
 
 ##### 1. DOM composition Mean and sd Calculation ####
