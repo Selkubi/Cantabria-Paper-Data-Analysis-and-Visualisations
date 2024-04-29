@@ -1,7 +1,8 @@
  library(geosphere)
-
+library(getting.statistics)
+ 
 #### The functions to be used are here, but first you have to install package
-remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)
+#remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)
 
 ##### 1. Data Cleaning #####
 source("analysis/01_data_cleaning.R")
