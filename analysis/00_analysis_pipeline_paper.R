@@ -312,14 +312,14 @@ dev.off()
 
 ##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
-PCA_rot <- data.table(t(cor(PCA_scores[,c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
+PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
 
 PCAloadings <- data.table(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
 
-pca.scores<-wine.pca$x
-eigenvec12<-cbind(wine.pca$rotation[,1],wine.pca$rotation[,2])
-PCAloadings<-data.frame(cor(pca_data[,-(1:5)],pca.scores))
-PCAloadings$Variables=rownames(PCAloadings)
+pca.scores <- wine.pca$x
+eigenvec12 <- cbind(wine.pca$rotation[, 1],wine.pca$rotation[, 2])
+PCAloadings <- data.frame(cor(pca_data[, -(1:5)], pca.scores))
+PCAloadings$Variables = rownames(PCAloadings)
 
 MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
 MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
@@ -342,16 +342,16 @@ dev.off()
 
 plot_optical # we took out just the loading arrows and put the variable names manually using Inkscape 
 PCA_optical 
- pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
- plot(PCA_optical)
- dev.off()
+pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
+plot(PCA_optical)
+dev.off()
 #### End of PCA related calculations and plots ####
 
 #### 14. Hydrological Indices Analysis ####
-source("analysis/Indice_analysis.R")
+source("analysis/06_indice_analysis.R")
 
 #### 14. Loading plots ####
-source("analysis/06_loading_plots.R")
+source("analysis/07_loading_plots.R")
 
 # Hydrological plots
 source("R/hydrological_analysis.R")
