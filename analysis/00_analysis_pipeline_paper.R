@@ -52,11 +52,11 @@ multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["var
 #### End of DOC mean and CV ####
 
 #### DOM composition ####
-data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
+data_sum$C_tot = data_sum[, Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5 + Comp.6 + Comp.7 + Comp.8]
 
 ##### 1. DOM composition Mean and sd Calculation ####
 DOM_averages <- data_sum[,.(FI2 = mean(FIX, na.rm = T), HI2 = mean(HIX2, na.rm = T), 
-                         beta.alpha2= mean(beta.alpha, na.rm = T), SUVA254_2 = mean(SUVA254, na.rm = T),
+                         beta.alpha2 = mean(beta.alpha, na.rm = T), SUVA254_2 = mean(SUVA254, na.rm = T),
                          SR = mean(SR_Loiselle, na.rm = T), E2toE3 = mean(E2.to.E3, na.rm = T), 
                          C_humic = mean((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot, na.rm = T),
                          C_protein = mean((Comp.6 + Comp.7 + Comp.8) / C_tot, na.rm = T), 

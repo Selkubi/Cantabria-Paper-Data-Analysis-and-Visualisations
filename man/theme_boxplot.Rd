@@ -7,7 +7,7 @@
 theme_boxplot()
 }
 \value{
-ggplott theme
+ggplot theme
 }
 \description{
 Common theme function for the boxplots and pca plots
