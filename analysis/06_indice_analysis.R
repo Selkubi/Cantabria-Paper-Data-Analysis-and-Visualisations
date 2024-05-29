@@ -43,9 +43,9 @@ PCAloadings$Variables <- c("l2","lcv","lca","lkur", "M1","M2","M3", "M4" ,"M5" ,
                         "ZFD","BFI", "sdZFD","sdBFI","JMin","JMAx", "sdJMIn","sdJMax","Pred","FRE1","FRE3","FRE7","sdFRE1", "sdFRE3","sdFRE7","nPLow","dPLow","nPHigh","dPHigh", "sdnPLow", "sddPLow", "sdnHigh","sddPHigh","nPos","Pos", "nNeg",       
                         "Neg","sdnPos","sdPos","sdnNeg","sdNeg","Rev","sdReversals")
 
-pca.scores<-wine.pca2$x
-eigenvec12<-cbind(wine.pca2$rotation[,1],wine.pca2$rotation[,2])
-PCAloadings<-data.frame(cor(pca_data2[,-c(1,87:95)],pca.scores))
+pca.scores <- wine.pca2$x
+eigenvec12 <- cbind(wine.pca2$rotation[,1],wine.pca2$rotation[,2])
+PCAloadings <- data.frame(cor(pca_data2[,-c(1,87:95)],pca.scores))
 PCAloadings$Variables <- rownames(PCAloadings)
 
 PCA_scores2 <- data.table(pca_data2, wine.pca2$x)
@@ -272,28 +272,28 @@ PLSR_All1 <- ggplot(plot_indexes[!sapply(plot_indexes$index, FUN = grepl, patter
   geom_col(aes(x = index, y = value, fill = variable), position = position_dodge(),
            color = "black", width = 0.7,  lwd = 0.2) +
   theme_pca() +
-  theme(axis.text.x = element_text(angle = 65, hjust = 1),
-        legend.position = "top", 
+  theme(legend.position = "top", 
         panel.grid.major = element_line(color = "grey")) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
   ylab("Normalized Regression Coefficient") + ylim(-1, 1) +
-  guides(fill = guide_legend(title = "Model"))
+  guides(fill = guide_legend(title = "Model")) +
+  coord_flip()
   
 
 PLSR_All2 <- ggplot(plot_indexes[sapply(plot_indexes$index, FUN = grepl, pattern = "SD")]) +
   geom_col(aes(x = index, y = value, fill = variable), position = position_dodge(),
            color = "black", width = 0.6,  lwd = 0.2) +
   theme_pca() +
-  theme(axis.text.x = element_text(angle = 65, hjust = 1),
-        legend.position = "top", 
+  theme(legend.position = "top", 
         panel.grid.major = element_line(color = "grey")) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
   ylab("Bormalized Regression Coefficient") + ylim(-1, 1) +
-  guides(fill = guide_legend(title = "Model"))
+  guides(fill = guide_legend(title = "Model")) +
+  coord_flip()
 # "#665191", "#dd5182", "#ffa600"
 
 pdf('output/plots/PLSR_All1.pdf', width = 10, height = 6)
