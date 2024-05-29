@@ -31,8 +31,7 @@ individual_pc2 = ggplot(data = PCA_results, aes(x = groups.x, y = PC2)) +
   geom_boxplot(aes(x = groups.x, y = PC2, fill = groups.x, group = reorder(site, PC2, median)),lwd = 0.2, outlier.size = 0.5)+
   scale_fill_manual(values = c("#B4DCED", '#6996D1','#F5CB7D','#F09E41'))+
   scale_x_discrete(labels = c("MedAlt" = "aM","MedNat" = "nM", "TempAlt" = "aA", "TempNat" = "nA"))+
-  scale_shape_manual(values = c(23,22,25,24))+
-  scale_y_continuous(limits = c(-5,7.5))+
+  scale_shape_manual(values = c(2.5,7.5))+
   theme_pca() +
   ylab("PC2") +
   theme_boxplot()
