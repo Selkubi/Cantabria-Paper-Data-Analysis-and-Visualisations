@@ -273,10 +273,12 @@ PLSR_All1 <- ggplot(plot_indexes[!sapply(plot_indexes$index, FUN = grepl, patter
            color = "black", width = 0.8,  lwd = 0.1) +
   theme_pca() +
   theme(legend.position = "none", 
-        panel.grid.major = element_line(color = "grey", linewidth = 0.1)) +
+        panel.grid.major = element_line(color = "grey", linewidth = 0.1),
+        axis.text = element_text(size = 12)) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
+  scale_x_discrete(limits = rev) +
   ylab("Normalized Regression Coefficient") + ylim(-1, 1) +
   guides(fill = guide_legend(title = "Model")) +
   coord_flip()
@@ -287,10 +289,12 @@ PLSR_All2 <- ggplot(plot_indexes[sapply(plot_indexes$index, FUN = grepl, pattern
            color = "black", width = 0.7,  lwd = 0.1) +
   theme_pca() +
   theme(legend.position = "top",
-        panel.grid.major = element_line(color = "grey", linewidth = 0.1)) +
+        panel.grid.major = element_line(color = "grey", linewidth = 0.1),
+        axis.text = element_text(size = 12)) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
+  scale_x_discrete(limits = rev) +
   ylab("Bormalized Regression Coefficient") + ylim(-1, 1) +
   guides(fill = guide_legend(title = "Model")) +
   coord_flip()
