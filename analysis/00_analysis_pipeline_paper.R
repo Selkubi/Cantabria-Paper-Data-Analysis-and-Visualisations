@@ -1,12 +1,8 @@
-# library(vegan)
- library(geosphere)
-# library(gridExtra)
-# library(data.table)
-# library(ggplot2)
-# library(lubridate)
-
-#### The functions to be used are here, but first you have to load the project package
-roxygen2::roxygenize()
+library(geosphere)
+library(getting.statistics)
+ 
+#### The functions to be used are here, but first you have to install package
+#remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)
 
 ##### 1. Data Cleaning #####
 source("analysis/01_data_cleaning.R")
@@ -56,23 +52,11 @@ multcompView::multcompLetters(rcompanion::fullPTable(pairwise_results_mean[["var
 #### End of DOC mean and CV ####
 
 #### DOM composition ####
-# data_summary = data_sum[, .(FI2 = (FIX), HI2= (HIX2), 
-#                           beta.alpha2 = (beta.alpha ), SUVA254_2 = (SUVA254),
-#                           SR = (SR_Loiselle ), E2toE3 = (E2.to.E3 ),
-#                           C_HMWS = (HMWS_C/CDOC), C_LMWS = (LMWS_C/CDOC),
-#                           C_HS = (humic_like_substance_C/CDOC ),
-#                           C_terrestrial = ((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot),
-#                           C_protein = ((Comp.6 + Comp.7 + Comp.8) / C_tot)),
-#                           by = .(site, alteration, Class,  groups.x, campaign)]
-
-#data_summary[data_summary[, C_HMWS > 0.3]]$C_HMWS = NA
-#data_summary[data_summary[, C_HS > 1.5]]$C_HS = NA
-
-data_sum$C_tot=data_sum[,Comp.1+Comp.2+Comp.3+Comp.4+Comp.5+Comp.6+Comp.7+Comp.8]
+data_sum$C_tot = data_sum[, Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5 + Comp.6 + Comp.7 + Comp.8]
 
 ##### 1. DOM composition Mean and sd Calculation ####
 DOM_averages <- data_sum[,.(FI2 = mean(FIX, na.rm = T), HI2 = mean(HIX2, na.rm = T), 
-                         beta.alpha2= mean(beta.alpha, na.rm = T), SUVA254_2 = mean(SUVA254, na.rm = T),
+                         beta.alpha2 = mean(beta.alpha, na.rm = T), SUVA254_2 = mean(SUVA254, na.rm = T),
                          SR = mean(SR_Loiselle, na.rm = T), E2toE3 = mean(E2.to.E3, na.rm = T), 
                          C_humic = mean((Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot, na.rm = T),
                          C_protein = mean((Comp.6 + Comp.7 + Comp.8) / C_tot, na.rm = T), 
@@ -328,14 +312,14 @@ dev.off()
 
 ##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
-PCA_rot <- data.table(t(cor(PCA_scores[,c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
+PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
 
 PCAloadings <- data.table(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
 
-pca.scores<-wine.pca$x
-eigenvec12<-cbind(wine.pca$rotation[,1],wine.pca$rotation[,2])
-PCAloadings<-data.frame(cor(pca_data[,-(1:5)],pca.scores))
-PCAloadings$Variables=rownames(PCAloadings)
+pca.scores <- wine.pca$x
+eigenvec12 <- cbind(wine.pca$rotation[, 1],wine.pca$rotation[, 2])
+PCAloadings <- data.frame(cor(pca_data[, -(1:5)], pca.scores))
+PCAloadings$Variables = rownames(PCAloadings)
 
 MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
 MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
@@ -358,16 +342,16 @@ dev.off()
 
 plot_optical # we took out just the loading arrows and put the variable names manually using Inkscape 
 PCA_optical 
- pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
- plot(PCA_optical)
- dev.off()
+pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
+plot(PCA_optical)
+dev.off()
 #### End of PCA related calculations and plots ####
 
 #### 14. Hydrological Indices Analysis ####
-source("analysis/Indice_analysis.R")
+source("analysis/06_indice_analysis.R")
 
 #### 14. Loading plots ####
-source("analysis/06_loading_plots.R")
+source("analysis/07_loading_plots.R")
 
 # Hydrological plots
 source("R/hydrological_analysis.R")
