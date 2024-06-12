@@ -291,7 +291,7 @@ PLSR_All2 <- ggplot(plot_indexes[sapply(plot_indexes$index, FUN = grepl, pattern
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
-  ylab("Bormalized Regression Coefficient") + ylim(-1, 1) +
+  ylab("Normalized Regression Coefficient") + ylim(-1, 1) +
   guides(fill = guide_legend(title = "Model")) +
   coord_flip()
 # "#665191", "#dd5182", "#ffa600"
