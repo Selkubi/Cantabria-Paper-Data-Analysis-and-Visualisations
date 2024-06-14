@@ -270,13 +270,15 @@ plot_indexes[is.na(plot_indexes$value)]$value <- 0
 
 PLSR_All1 <- ggplot(plot_indexes[!sapply(plot_indexes$index, FUN = grepl, pattern = "SD")]) +
   geom_col(aes(x = index, y = value, fill = variable), position = position_dodge(),
-           color = "black", width = 0.7,  lwd = 0.2) +
+           color = "black", width = 0.8,  lwd = 0.1) +
   theme_pca() +
-  theme(legend.position = "top", 
-        panel.grid.major = element_line(color = "grey")) +
+  theme(legend.position = "none", 
+        panel.grid.major = element_line(color = "grey", linewidth = 0.1),
+        axis.text = element_text(size = 12)) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
+  scale_x_discrete(limits = rev) +
   ylab("Normalized Regression Coefficient") + ylim(-1, 1) +
   guides(fill = guide_legend(title = "Model")) +
   coord_flip()
@@ -284,22 +286,28 @@ PLSR_All1 <- ggplot(plot_indexes[!sapply(plot_indexes$index, FUN = grepl, patter
 
 PLSR_All2 <- ggplot(plot_indexes[sapply(plot_indexes$index, FUN = grepl, pattern = "SD")]) +
   geom_col(aes(x = index, y = value, fill = variable), position = position_dodge(),
-           color = "black", width = 0.6,  lwd = 0.2) +
+           color = "black", width = 0.7,  lwd = 0.1) +
   theme_pca() +
-  theme(legend.position = "top", 
-        panel.grid.major = element_line(color = "grey")) +
+  theme(legend.position = "top",
+        panel.grid.major = element_line(color = "grey", linewidth = 0.1),
+        axis.text = element_text(size = 12)) +
   scale_fill_manual(values = c("#eeca8e", "#9c8fb1", "#d1d1d1"),
                     limits = c("normalized_RC_PC_all", "normalized_RC_PC1", "normalized_RC_PC2"),
                     labels = c("PCA Dispersion", "PC1 Variance", "PC2 Variance")) +
+<<<<<<< HEAD
   ylab("Normalized Regression Coefficient") + ylim(-1, 1) +
+=======
+  scale_x_discrete(limits = rev) +
+  ylab("Bormalized Regression Coefficient") + ylim(-1, 1) +
+>>>>>>> 10ce6c9dad246055e3177c240b4187c168f09bea
   guides(fill = guide_legend(title = "Model")) +
   coord_flip()
 # "#665191", "#dd5182", "#ffa600"
 
-pdf('output/plots/PLSR_All1.pdf', width = 10, height = 6)
+pdf('output/plots/PLSR_All1.pdf', width = 6, height = 8)
 plot(PLSR_All1)
 dev.off()
-pdf('output/plots/PLSR_All2.pdf', width = 10, height = 6)
+pdf('output/plots/PLSR_All2.pdf', width = 6, height = 7.5)
 plot(PLSR_All2)
 dev.off()
 
