@@ -12,7 +12,7 @@ source("analysis/02_DOC_DOM_plots.R")
 
 mean_NPOC
 
-if (!dir.exists("output/plots") ) {
+if (!dir.exists("output/plots")) {
   dir.create("output/plots")
 }
 
