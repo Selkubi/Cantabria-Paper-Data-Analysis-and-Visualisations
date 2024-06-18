@@ -148,7 +148,7 @@ fre_indice <- ggplot(melted_data2) +
   theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement = "outside",
         strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
 
-pdf("output/plots/fre_indice_boxplots.pdf", width = 6, height = 1.5)
+pdf("output/plots/fre_indice_boxplots.pdf", width = 9, height = 3)
 plot(fre_indice)
 dev.off()
 #### End of indice boxplots
