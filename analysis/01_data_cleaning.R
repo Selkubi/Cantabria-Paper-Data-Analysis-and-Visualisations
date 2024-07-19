@@ -28,23 +28,23 @@ data_means <- aggregate(x = abs_data[, c("FIX", "FIX2", "HIX", "HIX2", "beta.alp
                                         "slope_classic", "slope_lm", "slope_short_Loiselle", "slope_short_Helms", "SR_Loiselle", "SR_Helms")], 
                        by = abs_data[,c("site", "campaign")], FUN = mean, na.rm = T, trim = 0.25)
 
-meta_sum_optical <- as.data.table(cbind(read.csv("data/metafiles/meta_file_2.csv"),data_means), key = c("site","campaign"))
+meta_sum_optical <- as.data.table(cbind(read.csv("data/metafiles/meta_file_2.csv"), data_means), key = c("site","campaign"))
 
 # Converting the sample names without the index numbers - wouldn't need it if data were named with 000
 sample_loadings[, c("campaign", "run", "sample2", "num") := tstrsplit(sample, "_")]
-sample_loadings[,c("sample_code") := paste0(sample_loadings$campaign,"_", sample_loadings$run, "_", sample_loadings$sample2)]
+sample_loadings[, c("sample_code") := paste0(sample_loadings$campaign,"_", sample_loadings$run, "_", sample_loadings$sample2)]
 setdiff(sample_names$sample_code, sample_loadings$sample_code) 
 #Check why these are not matching. 
 #In my case, they are the samples removed during parafac because of weird looking eems.
 #So it makes sense to remove them here too since there might be a contamination affecting all
 
 ##### Binding the data frames ####
-meta_component_data <- merge(sample_loadings, sample_names, by.x=c("sample_code", "campaign"), by.y=c("sample_code", "campaign"))
+meta_component_data <- merge(sample_loadings, sample_names, by.x = c("sample_code", "campaign"), by.y = c("sample_code", "campaign"))
 
 # We excluded Carrion from here onwards due to very low concentrations on all seasons
-meta_component_data <- meta_component_data[meta_component_data$site!="Carrion",]
-meta_sum_optical <- meta_sum_optical[meta_sum_optical$site!="Carrion",]
-sample_names <- sample_names[sample_names$site!="Carrion",]
+meta_component_data <- meta_component_data[meta_component_data$site != "Carrion",]
+meta_sum_optical <- meta_sum_optical[meta_sum_optical$site != "Carrion",]
+sample_names <- sample_names[sample_names$site != "Carrion",]
 site_info <- site_info[site_info$site != "Carrion",]
 
 ##### Prepping for the DOC mean and variance plots ####
@@ -61,7 +61,7 @@ variables_to_convert <- c("HMWS_C", "humic_like_substance_C", "LMWS_C", "HMWS_N"
 data_sum[, (variables_to_convert) := lapply(.SD, convert_below_detection_limit), .SDcols = variables_to_convert]
 
 # Select the variables to be used for the rest of the analysis/paper
-data_sum2 <- data_sum[,c("campaign", "site", "groups.x","Class","alteration", "Comp.1", "Comp.2",  "Comp.3", "Comp.4", "Comp.5", "Comp.6", "Comp.7", "Comp.8", "BDOC", "NPOC", "SUVA254",
+data_sum2 <- data_sum[,c("campaign", "site", "groups.x","Class","alteration", "alteration_type", "alteration_type_grouping", "storage_index","Comp.1", "Comp.2",  "Comp.3", "Comp.4", "Comp.5", "Comp.6", "Comp.7", "Comp.8", "BDOC", "NPOC", "SUVA254",
                         "FIX", "FIX2", "HIX2", "beta.alpha", "slope_classic", "slope_lm", "slope_short_Helms", "slope_short_Loiselle",
                         "SR_Helms", "SR_Loiselle", "E2.to.E3", "E4.to.E6", "DecAbsCoeff254")]
 
@@ -69,7 +69,7 @@ data_sum2 <- data_sum[,c("campaign", "site", "groups.x","Class","alteration", "C
 ##### 1. Data Mean and CV Calculation #####
 DOC_sum <- merge(data_sum2[, .(mean_BDOC = mean(BDOC, na.rm = TRUE), mean_NPOC = mean(NPOC, na.rm = TRUE), 
                               var_BDOC = CV(BDOC), var_NPOC = CV(NPOC)), by = .(site)], 
-                site_info[site != "Carrion",c("site", "Class", "alteration", "groups")])
+                site_info[site != "Carrion", c("site", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping", "storage_index")])
 
 group_means <- DOC_sum[, .(means = mean(mean_NPOC, na.rm = TRUE) , sd_NPOC = sd(mean_NPOC)), by = .(groups)]
 group_CVs <- DOC_sum[, .(means = mean(var_NPOC, na.rm = TRUE) , sd_NPOC = sd(var_NPOC)), by = .(groups)]
