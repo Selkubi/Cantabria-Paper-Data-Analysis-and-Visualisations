@@ -35,18 +35,20 @@ means$groups <- factor(means$groups, levels = c("TempNat", "TempAlt", "MedNat", 
 hydrographs <- ggplot(means) +
   facet_wrap(~ alteration_type_grouping, scales = "free",
              labeller = as_labeller(c(TempNat = "nA", TempAlt_hydropower = "aA - Hydropower", TempAlt_irrigation = "aA - Irrigation", MedNat = "nM", MedAlt_irrigation = "aM"))) +
+  geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping, fill = alteration_type_grouping), color = "black", size = 2) +
   geom_line(aes(x = month, y = value / annual_max, group = variable, color = alteration_type_grouping), size = 0.5, alpha = 0.7) +
   #directlabels::geom_dl(aes(x = month, y = value/annual_max, group = variable, label = variable, color=groups), method = "first.qp") +
   geom_line(data = means_summary, aes(x = month, y = normalized_mean, group = alteration_type_grouping, color = alteration_type_grouping), size = 1.5) +
-  geom_point(aes(x = month, y = value / annual_max, group = variable, color = alteration_type_grouping), size = 1.2, alpha = 0.7) +
   scale_color_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
+  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
   scale_x_discrete(labels = c("1" = "J", "2" = "F", "3" = "M",
                               "4" = "A", "5" = "M", "6" = "J",
                               "7" = "J", "8" = "A", "9" = "S",
                               "10" = "O", "11" = "N", "12" = "D")) +
+  scale_shape_manual(values = c(23, 22, 21, 25, 24)) +
   labs(x = "Months", y = paste("Mean Montly flow (m3/s)")) +
   theme_pca()
 
-pdf("output/plots/hydrographs.pdf", width = 5, height = 4)
+pdf("output/plots/hydrographs.pdf", width = 6, height = 4)
 plot(hydrographs)
 dev.off()

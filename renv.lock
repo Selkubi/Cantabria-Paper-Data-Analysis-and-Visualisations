@@ -721,9 +721,19 @@
       ],
       "Hash": "45aa4def70a402e7d20efde490c13ecb"
     },
+    "ggnewscale": {
+      "Package": "ggnewscale",
+      "Version": "0.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "ggplot2"
+      ],
+      "Hash": "0e4714a05e572eacd7c232fde675558e"
+    },
     "ggplot2": {
       "Package": "ggplot2",
-      "Version": "3.4.3",
+      "Version": "3.5.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -744,7 +754,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "85846544c596e71f8f46483ab165da33"
+      "Hash": "44c6a2f8202d5b7e878ea274b1092426"
     },
     "gld": {
       "Package": "gld",
@@ -1537,29 +1547,15 @@
       ],
       "Hash": "76c9e04c712a05848ae7a23d2f170a40"
     },
-    "remotes": {
-      "Package": "remotes",
-      "Version": "2.4.2.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "methods",
-        "stats",
-        "tools",
-        "utils"
-      ],
-      "Hash": "63d15047eb239f95160112bcadc4fcb9"
-    },
     "renv": {
       "Package": "renv",
-      "Version": "1.0.0",
+      "Version": "1.0.7",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "utils"
       ],
-      "Hash": "c321cd99d56443dbffd1c9e673c0c1a2"
+      "Hash": "397b7b2a265bc5a7a06852524dabae20"
     },
     "reprex": {
       "Package": "reprex",
@@ -1709,21 +1705,23 @@
     },
     "scales": {
       "Package": "scales",
-      "Version": "1.2.1",
+      "Version": "1.3.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "R6",
         "RColorBrewer",
+        "cli",
         "farver",
+        "glue",
         "labeling",
         "lifecycle",
         "munsell",
         "rlang",
         "viridisLite"
       ],
-      "Hash": "906cb23d2f1c5680b8ce439b44c6fa63"
+      "Hash": "c19df082ba346b0ffa6f833e92de34d1"
     },
     "selectr": {
       "Package": "selectr",

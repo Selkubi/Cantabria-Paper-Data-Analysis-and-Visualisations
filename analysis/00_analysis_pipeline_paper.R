@@ -182,7 +182,7 @@ t_test_letters
 
 ##### 7. PCA data prep #####
 data_sum$campaign <- factor(x = data_sum$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"), labels = c("Oct", "Dec", "Feb", "Apr", "May", "Aug"))
-pca_data <- data_sum[, .(alteration, Class,groups.x,
+pca_data <- data_sum[, .(alteration, Class, groups.x, alteration_type, alteration_type_grouping,
              HIX2, FIX, beta.alpha, SR_Loiselle,
              E2.to.E3, SUVA254,
              C_humic = (Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot, 
@@ -194,13 +194,13 @@ pca_data <- data_sum[, .(alteration, Class,groups.x,
 
 pca_data[is.na(pca_data)] <- 0
 
-wine.pca <- prcomp(pca_data[, -(1:5)], scale. = TRUE) 
+wine.pca <- prcomp(pca_data[, -(1:7)], scale. = TRUE) 
 summary(wine.pca)
 group_types <- factor(c("TempAlt", "TempNat", "MedAlt", "MedNat"))
 
 group_list <- vector("list")
 for(i in seq_along(group_types)){
-  group_list[[i]] =  site_info[groups == group_types[[i]], c("site", "Class", "alteration", "groups", "Alteration_type", "Catchment")]
+  group_list[[i]] =  site_info[groups == group_types[[i]], c("site", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")]
 }
 
 ##### 8. PCA polygon plots #####
@@ -228,7 +228,7 @@ PCA_results <- cbind(wine.pca$x[, c(1:2)], pca_data)
 # complete dataset of PCA information
 PC_info <- merge(PCA_results[, .(mean_PC1 = mean(PC1, na.rm = TRUE), mean_PC2 = mean(PC2, na.rm = TRUE), 
                                 var_PC1 = var(PC1), var_PC2 = var(PC2)), by = .(site)], 
-                site_info[, c("site", "Class", "alteration", "groups")])
+                site_info[, c("site", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")])
 
 ##### 10. Statistical tests on PCA polygons #####
 # Mean of PC1
