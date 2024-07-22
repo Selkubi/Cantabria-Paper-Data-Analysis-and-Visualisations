@@ -74,5 +74,7 @@ DOC_sum <- merge(data_sum2[, .(mean_BDOC = mean(BDOC, na.rm = TRUE), mean_NPOC =
 group_means <- DOC_sum[, .(means = mean(mean_NPOC, na.rm = TRUE) , sd_NPOC = sd(mean_NPOC)), by = .(groups)]
 group_CVs <- DOC_sum[, .(means = mean(var_NPOC, na.rm = TRUE) , sd_NPOC = sd(var_NPOC)), by = .(groups)]
 data_sum$groups.x <- factor(data_sum$groups.x, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
-data_sum$groups.x <- factor(data_sum$alteration_type_grouping, levels = c("TempNat", "TempAlt_hydropower", "TempAlt_irrigation", 
+data_sum$alteration_type_grouping <- factor(data_sum$alteration_type_grouping, levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower",
                                                                           "MedNat", "MedAlt_irrigation"))
+
+data_sum$alteration_type  <- factor(data_sum$alteration_type, levels = c("irrigation", "hydropower", "natural"))
