@@ -15,11 +15,11 @@ rate_freq_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group5.cs
 meta_indices <- as.data.table(Reduce(function(x, y) merge(x = x, y = y, by = "Stream"),
                                      x = list(magnitude_ind, magnitude_duration_extreme_ind,
                                               timing_extreme_ind, freq_duration_pulses_ind, rate_freq_ind)))
-site_info <- as.data.table(read.csv("data/metafiles/site_summary.csv"))
+#site_info <- as.data.table(read.csv2("data/metafiles/site_summary.csv"))
 
 # We remove the Carrion sample same as in other analysis due to low C concentration
-site_info <- site_info[site_info$site != "Carrion", ]
-meta_indices <- meta_indices[Stream != "Carrion"]
+#site_info <- site_info[site_info$site != "Carrion", ]
+#meta_indices <- meta_indices[Stream != "Carrion"]
 
 #Flow indice PCA
 pca_data2 <- merge(meta_indices, site_info, by.x = "Stream", by.y = "site")
@@ -101,33 +101,35 @@ plot(River_scores)
 dev.off()
 
 plot(wine.pca2$x[, c(1:2)], type = "n", ylim = c(-10, 10), xlim = c(-10, 10), cex.main = 1.5, cex.axis = 1.25)
-p <- ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups, display = "sites", draw = "polygon", label = FALSE,
-         alpha = 0.7, col = c("#B4DCED"))
-summary(p)
+summary(ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups))
 
 #### The indice bpxplots selected from the previous PCA analyiss ####
-data <- pca_data2[, c("Stream", "groups", "alteration", "Class", "nPLow", "dPLow", "nPHigh", "dPHigh")]
-ggplot() +
-  geom_point(data = data, aes(x = Stream, y = nPLow, col = groups), size = 8)
+id.vars = c("Stream", "groups", "alteration_type_grouping", "alteration", "Class")
+measure.vars = c("X1HF", "X90HF", "X1LF", "X90LF")
+plot_HIs <- c(id.vars, measure.vars)
+data <- pca_data2[, ..plot_HIs]
 
-melted_data <- melt(data, id.vars = c("Stream", "groups", "alteration", "Class"), measure.vars = c("nPLow", "dPLow", "nPHigh", "dPHigh"))
-melted_data$groups <- factor(melted_data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+melted_data <- melt(data, id.vars = id.vars, measure.vars = measure.vars)
+melted_data$groups <- factor(melted_data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"),
+                                                 labels = c("nA", "aA", "nM", "aM"))
+melted_data$alteration_type_grouping <- factor(melted_data$alteration_type_grouping, 
+                                               levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"),
+                                               labels = c("nA", "aA-irrigation", "aA-hydropower", "nM", "aM-irrigation"))
 
 hydro_indices <- ggplot(melted_data) +
-  geom_boxplot(aes(x = groups, y = value, fill = groups), width = 0.5) +
-  facet_wrap(~variable, scales = "free", strip.position = "left", labeller = as_labeller(c(nPLow = "Low Flow Event Count",
-                                                                                           dPLow = "Low Flow Event Duration",
-                                                                                           nPHigh = "High Flow Event Count",
-                                                                                           dPHigh = "High Flow Event Duration"))) +
-  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#F5CB7D", "#F09E41")) +
+  geom_boxplot(aes(x = groups, y = value, fill = alteration_type_grouping), width = 0.5) +
+  facet_wrap(~variable, scales = "free", strip.position = "left", 
+             labeller = as_labeller(c(X1HF = "1-Day High Flow Events",
+                                      X90HF = "90-Day High Flow Events",
+                                      X1LF = "1-Day High Low Events",
+                                      X90LF = "90-Day High Low Events"))) +
+  scale_fill_manual(values = c("#B4DCED", "#6996D1","#2B5FA2", "#F5CB7D", "#F09E41")) +
   theme(axis.line.x = element_line(color = "black"), axis.line.y =  element_line(color = "black"), panel.grid = element_blank(), panel.background = element_blank()) +
   theme(legend.position = "none") + ylab("7-Day Maximum Flows (7HF)") +
-  scale_x_discrete(limits = c("TempNat", "TempAlt", "MedNat", "MedAlt"),
-                   labels = c("nA", "aA", "nM", "aM")) +
-  theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement = "outside",
-        strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
+  theme_boxplot() +
+  theme(legend.position = "bottom")
 
-pdf("output/plots/Indice_boxplots.pdf", width = 5, height = 5)
+pdf("output/plots/Indice_boxplots.pdf", width = 5, height = 5.5)
 plot(hydro_indices)
 dev.off()
 
