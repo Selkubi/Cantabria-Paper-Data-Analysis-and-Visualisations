@@ -105,7 +105,7 @@ summary(ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups))
 
 #### The indice bpxplots selected from the previous PCA analyiss ####
 id.vars = c("Stream", "groups", "alteration_type_grouping", "alteration", "Class")
-measure.vars = c("X1HF", "X90HF", "X1LF", "X90LF")
+measure.vars = c("X1HF", "X30HF", "X90HF","X1LF", "X30LF", "X90LF")
 plot_HIs <- c(id.vars, measure.vars)
 data <- pca_data2[, ..plot_HIs]
 
@@ -119,17 +119,19 @@ melted_data$alteration_type_grouping <- factor(melted_data$alteration_type_group
 hydro_indices <- ggplot(melted_data) +
   geom_boxplot(aes(x = groups, y = value, fill = alteration_type_grouping), width = 0.5) +
   facet_wrap(~variable, scales = "free", strip.position = "left", 
-             labeller = as_labeller(c(X1HF = "1-Day High Flow Events",
-                                      X90HF = "90-Day High Flow Events",
-                                      X1LF = "1-Day High Low Events",
-                                      X90LF = "90-Day High Low Events"))) +
+             labeller = as_labeller(c(X1HF = "1HF",
+                                      X30HF = "30HF",
+                                      X90HF = "90HF",
+                                      X1LF = "1LF",
+                                      X30LF = "30LF",
+                                      X90LF = "90LF"))) +
   scale_fill_manual(values = c("#B4DCED", "#6996D1","#2B5FA2", "#F5CB7D", "#F09E41")) +
   theme(axis.line.x = element_line(color = "black"), axis.line.y =  element_line(color = "black"), panel.grid = element_blank(), panel.background = element_blank()) +
   theme(legend.position = "none") + ylab("7-Day Maximum Flows (7HF)") +
   theme_boxplot() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", panel.spacing = unit(0.5, "lines"))
 
-pdf("output/plots/Indice_boxplots.pdf", width = 5, height = 5.5)
+pdf("output/plots/Indice_boxplots.pdf", width = 6.5, height = 4.5)
 plot(hydro_indices)
 dev.off()
 
