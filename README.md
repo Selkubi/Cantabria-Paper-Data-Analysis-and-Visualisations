@@ -1,7 +1,7 @@
 ## Data processing pipeline for our paper "Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain"
 #### Logo
 ### Badges
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13354231.svg)](https://doi.org/10.5281/zenodo.13354231)
 ### Intorduction 
 - [ ] What this repo does? Why is ti immportant
 - [ ] Links to the published paper
