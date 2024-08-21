@@ -13,6 +13,7 @@ source("analysis/02_DOC_DOM_plots.R")
 mean_NPOC 
 
 if(!dir.exists("output/plots")) {dir.create("output/plots")}
+
 pdf('output/plots/mean_NPOC.pdf', width = 4, height = 4)
 plot(mean_NPOC)
 dev.off()
@@ -181,7 +182,7 @@ t_test_letters
 
 ##### 7. PCA data prep #####
 data_sum$campaign <- factor(x = data_sum$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"), labels = c("Oct", "Dec", "Feb", "Apr", "May", "Aug"))
-pca_data <- data_sum[, .(alteration, Class,groups.x,
+pca_data <- data_sum[, .(alteration, Class, groups.x, alteration_type, alteration_type_grouping,
              HIX2, FIX, beta.alpha, SR_Loiselle,
              E2.to.E3, SUVA254,
              C_humic = (Comp.1 + Comp.2 + Comp.3 + Comp.4 + Comp.5) / C_tot, 
@@ -193,13 +194,13 @@ pca_data <- data_sum[, .(alteration, Class,groups.x,
 
 pca_data[is.na(pca_data)] <- 0
 
-wine.pca <- prcomp(pca_data[, -(1:5)], scale. = TRUE) 
+wine.pca <- prcomp(pca_data[, -(1:7)], scale. = TRUE) 
 summary(wine.pca)
 group_types <- factor(c("TempAlt", "TempNat", "MedAlt", "MedNat"))
 
 group_list <- vector("list")
 for(i in seq_along(group_types)){
-  group_list[[i]] =  site_info[groups == group_types[[i]], c("site", "Class", "alteration", "groups", "Alteration_type", "Catchment")]
+  group_list[[i]] =  site_info[groups == group_types[[i]], c("site", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")]
 }
 
 ##### 8. PCA polygon plots #####
@@ -227,7 +228,7 @@ PCA_results <- cbind(wine.pca$x[, c(1:2)], pca_data)
 # complete dataset of PCA information
 PC_info <- merge(PCA_results[, .(mean_PC1 = mean(PC1, na.rm = TRUE), mean_PC2 = mean(PC2, na.rm = TRUE), 
                                 var_PC1 = var(PC1), var_PC2 = var(PC2)), by = .(site)], 
-                site_info[, c("site", "Class", "alteration", "groups")])
+                site_info[, c("site", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")])
 
 ##### 10. Statistical tests on PCA polygons #####
 # Mean of PC1
@@ -301,24 +302,24 @@ pdf('output/plots/PCAll.pdf', width = 2.4, height = 2.5)
 plot(pl)
 dev.off()
 
-pdf('output/plots/PC1.pdf', width = 4, height = 4)
+pdf('output/plots/PC1.pdf', width = 2.5, height = 3.1)
 plot(individual_pc1)
 dev.off()
 
-pdf('output/plots/PC2.pdf', width = 4, height = 4)
+pdf('output/plots/PC2.pdf', width = 2.5, height = 3.1)
 plot(individual_pc2)
 dev.off()
 
 
 ##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
-PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
+PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:7)], method = "pearson")), keep.rownames = "Variables")
 
 PCAloadings <- data.table(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
 
 pca.scores <- wine.pca$x
 eigenvec12 <- cbind(wine.pca$rotation[, 1],wine.pca$rotation[, 2])
-PCAloadings <- data.frame(cor(pca_data[, -(1:5)], pca.scores))
+PCAloadings <- data.frame(cor(pca_data[, -(1:7)], pca.scores))
 PCAloadings$Variables = rownames(PCAloadings)
 
 MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
