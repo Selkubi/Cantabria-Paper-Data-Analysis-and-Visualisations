@@ -302,24 +302,24 @@ pdf('output/plots/PCAll.pdf', width = 2.4, height = 2.5)
 plot(pl)
 dev.off()
 
-pdf('output/plots/PC1.pdf', width = 4, height = 4)
+pdf('output/plots/PC1.pdf', width = 2.5, height = 3.1)
 plot(individual_pc1)
 dev.off()
 
-pdf('output/plots/PC2.pdf', width = 4, height = 4)
+pdf('output/plots/PC2.pdf', width = 2.5, height = 3.1)
 plot(individual_pc2)
 dev.off()
 
 
 ##### 13. PCA ordihull calculations ####
 PCA_scores <- data.table(pca_data, wine.pca$x)
-PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:5)], method = "pearson")), keep.rownames = "Variables")
+PCA_rot <- data.table(t(cor(PCA_scores[, c("PC1", "PC2")], pca_data[,-(1:7)], method = "pearson")), keep.rownames = "Variables")
 
 PCAloadings <- data.table(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
 
 pca.scores <- wine.pca$x
 eigenvec12 <- cbind(wine.pca$rotation[, 1],wine.pca$rotation[, 2])
-PCAloadings <- data.frame(cor(pca_data[, -(1:5)], pca.scores))
+PCAloadings <- data.frame(cor(pca_data[, -(1:7)], pca.scores))
 PCAloadings$Variables = rownames(PCAloadings)
 
 MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A

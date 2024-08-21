@@ -15,11 +15,11 @@ rate_freq_ind <- read.csv("data/hydrological_data/Hydra_Hydro_Ind_subs_group5.cs
 meta_indices <- as.data.table(Reduce(function(x, y) merge(x = x, y = y, by = "Stream"),
                                      x = list(magnitude_ind, magnitude_duration_extreme_ind,
                                               timing_extreme_ind, freq_duration_pulses_ind, rate_freq_ind)))
-site_info <- as.data.table(read.csv("data/metafiles/site_summary.csv"))
+#site_info <- as.data.table(read.csv2("data/metafiles/site_summary.csv"))
 
 # We remove the Carrion sample same as in other analysis due to low C concentration
-site_info <- site_info[site_info$site != "Carrion", ]
-meta_indices <- meta_indices[Stream != "Carrion"]
+#site_info <- site_info[site_info$site != "Carrion", ]
+#meta_indices <- meta_indices[Stream != "Carrion"]
 
 #Flow indice PCA
 pca_data2 <- merge(meta_indices, site_info, by.x = "Stream", by.y = "site")
@@ -28,15 +28,16 @@ summary(wine.pca2)
 screeplot(wine.pca2)
 
 ### PCA plots ####
-PCA_scores <- data.table(wine.pca2$x[, 1:2],  pca_data2[, c("Stream", "Class", "alteration", "groups")])
-MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
-MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
-TempAlt <- PCA_scores[PCA_scores$groups == "TempAlt", ][chull(PCA_scores[PCA_scores$groups == "TempAlt", c("PC1", "PC2")]), ]  # hull values for grp A
-TempNat <- PCA_scores[PCA_scores$groups == "TempNat", ][chull(PCA_scores[PCA_scores$groups == "TempNat", c("PC1", "PC2")]), ]  # hull values for grp A
+PCA_scores <- data.table(wine.pca2$x[, 1:2],  pca_data2[, c("Stream", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")])
+MedAlt_irrigation <- PCA_scores[PCA_scores$alteration_type_grouping == "MedAlt_irrigation", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "MedAlt_irrigation", c("PC1", "PC2")]), ]  # hull values for grp A
+MedNat <- PCA_scores[PCA_scores$alteration_type_grouping == "MedNat", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
+TempAlt_irrigation <- PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_irrigation", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_irrigation", c("PC1", "PC2")]), ]  # hull values for grp A
+TempAlt_hydropower <- PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_hydropower", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_hydropower", c("PC1", "PC2")]), ]  # hull values for grp A
+TempNat <- PCA_scores[PCA_scores$alteration_type_grouping == "TempNat", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempNat", c("PC1", "PC2")]), ]  # hull values for grp A
 
-hull.data <- rbind(MedAlt, MedNat, TempAlt, TempNat)
-hull.data$groups <- factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
-pca_data2$groups <- factor(pca_data2$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+hull.data <- rbind(MedAlt_irrigation, MedNat, TempAlt_irrigation,TempAlt_hydropower, TempNat)
+hull.data$alteration_type_grouping <- factor(hull.data$alteration_type_grouping, levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"))
+pca_data2$alteration_type_grouping <- factor(pca_data2$alteration_type_grouping, levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"))
 
 PCAloadings <- data.frame(Variables = rownames(wine.pca2$rotation), wine.pca2$rotation)
 PCAloadings$Variables <- c("l2", "lcv", "lca", "lkur", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "sdM1", "sdM2", "sdM3", "sdM4", "sdM5", "sdM6", "sdM7", "sdM8", "sdM9", "sdM10",
@@ -53,8 +54,6 @@ PCA_scores2 <- data.table(pca_data2, wine.pca2$x)
 PCA_rot2 <- data.table(t(cor(PCA_scores2[, c("PC1", "PC2")], pca_data2[, -c(1, 87:95)], method = "pearson")), keep.rownames = "Variables")
 
 Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_segment(data = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1 * 9.9), yend = (PC2 * 9.9)),
-               arrow = arrow(length = unit(1 / 2, "picas")), color = "black", alpha = 0.2) +
   annotate("text", x = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10),
           label = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$Variables, size = 4, color = "black") +
   theme_pca() +
@@ -69,8 +68,6 @@ plot(Indice_PCA1)
 dev.off()
 
 Indice_PCA2 <- Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_segment(data = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1 * 9.9), yend = (PC2 * 9.9)),
-               arrow = arrow(length = unit(1 / 2, "picas")), color = "black", alpha = 0.2) +
   annotate("text", x = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10),
            label = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$Variables, size = 4, color = "black") +
   theme_pca() +
@@ -86,48 +83,51 @@ plot(Indice_PCA2)
 dev.off()
 
 River_scores <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_polygon(data = hull.data, mapping = aes(x = PC1, y = PC2, fill = groups, group = groups), alpha = 0.8) +
-  geom_point(aes(group = pca_data2$groups, fill = pca_data2$groups, shape = pca_data2$groups), size = 2.5) +
-  theme_pca() +
-  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#F5CB7D", "#F09E41"), labels = c("nA", "aA", "nM", "aM")) +
-  scale_shape_manual(values = c(23, 22, 25, 24)) +
+  geom_polygon(data = hull.data, mapping = aes(x = PC1, y = PC2, fill = alteration_type_grouping, group = alteration_type_grouping), alpha = 0.8) +
+  geom_point(aes(group = pca_data2$alteration_type_grouping, fill = pca_data2$alteration_type_grouping, shape = pca_data2$alteration_type_grouping), size = 2.5) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
+  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
+  scale_shape_manual(values = c(23, 22, 21, 25, 24)) +
   theme(legend.title = element_blank(), legend.position = "none") +
   labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
-  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
-  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
+  theme_pca() + theme(legend.position = "bottom")
 
 pdf("output/plots/River_scores.pdf", width = 3, height = 3)
 plot(River_scores)
 dev.off()
 
 plot(wine.pca2$x[, c(1:2)], type = "n", ylim = c(-10, 10), xlim = c(-10, 10), cex.main = 1.5, cex.axis = 1.25)
-p <- ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups, display = "sites", draw = "polygon", label = FALSE,
-         alpha = 0.7, col = c("#B4DCED"))
-summary(p)
+summary(ordihull(ord = wine.pca2$x[, c(1:2)], groups = pca_data2$groups))
 
 #### The indice bpxplots selected from the previous PCA analyiss ####
-data <- pca_data2[, c("Stream", "groups", "alteration", "Class", "nPLow", "dPLow", "nPHigh", "dPHigh")]
-ggplot() +
-  geom_point(data = data, aes(x = Stream, y = nPLow, col = groups), size = 8)
+id.vars = c("Stream", "groups", "alteration_type_grouping", "alteration", "Class")
+measure.vars = c("X1HF", "X30HF", "X90HF","X1LF", "X30LF", "X90LF")
+plot_HIs <- c(id.vars, measure.vars)
+data <- pca_data2[, ..plot_HIs]
 
-melted_data <- melt(data, id.vars = c("Stream", "groups", "alteration", "Class"), measure.vars = c("nPLow", "dPLow", "nPHigh", "dPHigh"))
-melted_data$groups <- factor(melted_data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+melted_data <- melt(data, id.vars = id.vars, measure.vars = measure.vars)
+melted_data$groups <- factor(melted_data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"),
+                                                 labels = c("nA", "aA", "nM", "aM"))
+melted_data$alteration_type_grouping <- factor(melted_data$alteration_type_grouping, 
+                                               levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"),
+                                               labels = c("nA", "aA-irrigation", "aA-hydropower", "nM", "aM-irrigation"))
 
 hydro_indices <- ggplot(melted_data) +
-  geom_boxplot(aes(x = groups, y = value, fill = groups), width = 0.5) +
-  facet_wrap(~variable, scales = "free", strip.position = "left", labeller = as_labeller(c(nPLow = "Low Flow Event Count",
-                                                                                           dPLow = "Low Flow Event Duration",
-                                                                                           nPHigh = "High Flow Event Count",
-                                                                                           dPHigh = "High Flow Event Duration"))) +
-  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#F5CB7D", "#F09E41")) +
+  geom_boxplot(aes(x = groups, y = value, fill = alteration_type_grouping), width = 0.5) +
+  facet_wrap(~variable, scales = "free", strip.position = "left", 
+             labeller = as_labeller(c(X1HF = "1HF",
+                                      X30HF = "30HF",
+                                      X90HF = "90HF",
+                                      X1LF = "1LF",
+                                      X30LF = "30LF",
+                                      X90LF = "90LF"))) +
+  scale_fill_manual(values = c("#B4DCED", "#6996D1","#2B5FA2", "#F5CB7D", "#F09E41")) +
   theme(axis.line.x = element_line(color = "black"), axis.line.y =  element_line(color = "black"), panel.grid = element_blank(), panel.background = element_blank()) +
   theme(legend.position = "none") + ylab("7-Day Maximum Flows (7HF)") +
-  scale_x_discrete(limits = c("TempNat", "TempAlt", "MedNat", "MedAlt"),
-                   labels = c("nA", "aA", "nM", "aM")) +
-  theme(axis.text = element_text(size = 11, color = "black"), axis.title = element_blank(), legend.position = "none", strip.placement = "outside",
-        strip.background = element_blank(), strip.text = element_text(size = 11, color = "black"), panel.spacing = unit(1, "lines"))
+  theme_boxplot() +
+  theme(legend.position = "bottom", panel.spacing = unit(0.5, "lines"))
 
-pdf("output/plots/Indice_boxplots.pdf", width = 5, height = 5)
+pdf("output/plots/Indice_boxplots.pdf", width = 6.5, height = 4.5)
 plot(hydro_indices)
 dev.off()
 
