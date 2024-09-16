@@ -28,15 +28,16 @@ summary(wine.pca2)
 screeplot(wine.pca2)
 
 ### PCA plots ####
-PCA_scores <- data.table(wine.pca2$x[, 1:2],  pca_data2[, c("Stream", "Class", "alteration", "groups")])
-MedAlt <- PCA_scores[PCA_scores$groups == "MedAlt", ][chull(PCA_scores[PCA_scores$groups == "MedAlt", c("PC1", "PC2")]), ]  # hull values for grp A
-MedNat <- PCA_scores[PCA_scores$groups == "MedNat", ][chull(PCA_scores[PCA_scores$groups == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
-TempAlt <- PCA_scores[PCA_scores$groups == "TempAlt", ][chull(PCA_scores[PCA_scores$groups == "TempAlt", c("PC1", "PC2")]), ]  # hull values for grp A
-TempNat <- PCA_scores[PCA_scores$groups == "TempNat", ][chull(PCA_scores[PCA_scores$groups == "TempNat", c("PC1", "PC2")]), ]  # hull values for grp A
+PCA_scores <- data.table(wine.pca2$x[, 1:2],  pca_data2[, c("Stream", "Class", "alteration", "groups", "alteration_type", "alteration_type_grouping")])
+MedAlt_irrigation <- PCA_scores[PCA_scores$alteration_type_grouping == "MedAlt_irrigation", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "MedAlt_irrigation", c("PC1", "PC2")]), ]  # hull values for grp A
+MedNat <- PCA_scores[PCA_scores$alteration_type_grouping == "MedNat", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "MedNat", c("PC1", "PC2")]), ]  # hull values for grp A
+TempAlt_irrigation <- PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_irrigation", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_irrigation", c("PC1", "PC2")]), ]  # hull values for grp A
+TempAlt_hydropower <- PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_hydropower", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempAlt_hydropower", c("PC1", "PC2")]), ]  # hull values for grp A
+TempNat <- PCA_scores[PCA_scores$alteration_type_grouping == "TempNat", ][chull(PCA_scores[PCA_scores$alteration_type_grouping == "TempNat", c("PC1", "PC2")]), ]  # hull values for grp A
 
-hull.data <- rbind(MedAlt, MedNat, TempAlt, TempNat)
-hull.data$groups <- factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
-pca_data2$groups <- factor(pca_data2$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+hull.data <- rbind(MedAlt_irrigation, MedNat, TempAlt_irrigation,TempAlt_hydropower, TempNat)
+hull.data$alteration_type_grouping <- factor(hull.data$alteration_type_grouping, levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"))
+pca_data2$alteration_type_grouping <- factor(pca_data2$alteration_type_grouping, levels = c("TempNat", "TempAlt_irrigation", "TempAlt_hydropower","MedNat", "MedAlt_irrigation"))
 
 PCAloadings <- data.frame(Variables = rownames(wine.pca2$rotation), wine.pca2$rotation)
 PCAloadings$Variables <- c("l2", "lcv", "lca", "lkur", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "sdM1", "sdM2", "sdM3", "sdM4", "sdM5", "sdM6", "sdM7", "sdM8", "sdM9", "sdM10",
@@ -53,8 +54,6 @@ PCA_scores2 <- data.table(pca_data2, wine.pca2$x)
 PCA_rot2 <- data.table(t(cor(PCA_scores2[, c("PC1", "PC2")], pca_data2[, -c(1, 87:95)], method = "pearson")), keep.rownames = "Variables")
 
 Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_segment(data = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1 * 9.9), yend = (PC2 * 9.9)),
-               arrow = arrow(length = unit(1 / 2, "picas")), color = "black", alpha = 0.2) +
   annotate("text", x = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10),
           label = PCA_rot2[!startsWith(PCAloadings$Variables, "sd"), ]$Variables, size = 4, color = "black") +
   theme_pca() +
@@ -69,8 +68,6 @@ plot(Indice_PCA1)
 dev.off()
 
 Indice_PCA2 <- Indice_PCA1 <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_segment(data = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ], aes(x = 0, y = 0, xend = (PC1 * 9.9), yend = (PC2 * 9.9)),
-               arrow = arrow(length = unit(1 / 2, "picas")), color = "black", alpha = 0.2) +
   annotate("text", x = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC1 * 10), y = (PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$PC2 * 10),
            label = PCA_rot2[startsWith(PCAloadings$Variables, "sd"), ]$Variables, size = 4, color = "black") +
   theme_pca() +
@@ -86,15 +83,14 @@ plot(Indice_PCA2)
 dev.off()
 
 River_scores <- ggplot(pca_data2, aes(x = wine.pca2$x[, 1], y = wine.pca2$x[, 2])) +
-  geom_polygon(data = hull.data, mapping = aes(x = PC1, y = PC2, fill = groups, group = groups), alpha = 0.8) +
-  geom_point(aes(group = pca_data2$groups, fill = pca_data2$groups, shape = pca_data2$groups), size = 2.5) +
-  theme_pca() +
-  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#F5CB7D", "#F09E41"), labels = c("nA", "aA", "nM", "aM")) +
-  scale_shape_manual(values = c(23, 22, 25, 24)) +
+  geom_polygon(data = hull.data, mapping = aes(x = PC1, y = PC2, fill = alteration_type_grouping, group = alteration_type_grouping), alpha = 0.8) +
+  geom_point(aes(group = pca_data2$alteration_type_grouping, fill = pca_data2$alteration_type_grouping, shape = pca_data2$alteration_type_grouping), size = 2.5) +
+  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
+  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
+  scale_shape_manual(values = c(23, 22, 21, 25, 24)) +
   theme(legend.title = element_blank(), legend.position = "none") +
   labs(color = "Sites", x = "PC 1", y = "PC 2", title = NULL) +
-  theme(text = element_text(size = 7), axis.title = element_text(size = 11, color = "black"), axis.text = element_text(size = 11, color = "black")) +
-  geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + xlim(-10, 10) + ylim(-10, 10)
+  theme_pca() + theme(legend.position = "bottom")
 
 pdf("output/plots/River_scores.pdf", width = 3, height = 3)
 plot(River_scores)
