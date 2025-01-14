@@ -11,7 +11,7 @@ theme_pca <- function() {
     text = ggplot2::element_text(size = 11),
     axis.title = ggplot2::element_text(size = 11),
     axis.text = ggplot2::element_text(size = 11, color = "black"), 
-    legend.position = "none", 
+    #legend.position = "none", 
     strip.placement ="outside", 
     strip.background = ggplot2::element_blank(), 
     strip.text = ggplot2::element_blank(),

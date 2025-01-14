@@ -34,10 +34,15 @@ means$groups <- factor(means$groups, levels = c("TempNat", "TempAlt", "MedNat", 
 
 hydrographs <- ggplot(means) +
   facet_wrap(~ alteration_type_grouping, scales = "free",
-             labeller = as_labeller(c(TempNat = "nA", TempAlt_hydropower = "aA - Hydropower", TempAlt_irrigation = "aA - Irrigation", MedNat = "nM", MedAlt_irrigation = "aM"))) +
-  geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping, fill = alteration_type_grouping), color = "black", size = 2) +
+             labeller = as_labeller(c('TempNat' = "nA", 
+                                      'TempAlt_hydropower' = "aA - Hydropower", 
+                                      'TempAlt_irrigation' = "aA - Irrigation", 
+                                      'MedNat' = "nM",
+                                      'MedAlt_irrigation' = "aM - Irrigation"))) +
+  geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping,
+                 fill = alteration_type_grouping,  
+                 colour = alteration_type_grouping)) +
   geom_line(aes(x = month, y = value / annual_max, group = variable, color = alteration_type_grouping), size = 0.5, alpha = 0.7) +
-  #directlabels::geom_dl(aes(x = month, y = value/annual_max, group = variable, label = variable, color=groups), method = "first.qp") +
   geom_line(data = means_summary, aes(x = month, y = normalized_mean, group = alteration_type_grouping, color = alteration_type_grouping), size = 1.5) +
   scale_color_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
   scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
@@ -47,8 +52,9 @@ hydrographs <- ggplot(means) +
                               "10" = "O", "11" = "N", "12" = "D")) +
   scale_shape_manual(values = c(23, 22, 21, 25, 24)) +
   labs(x = "Months", y = paste("Mean Montly flow (m3/s)")) +
-  theme_pca()
+  theme_pca() + theme(legend.position = c(0.85, 0.2), legend.title = element_blank())
 
 pdf("output/plots/hydrographs.pdf", width = 6, height = 4)
 plot(hydrographs)
 dev.off()
+
