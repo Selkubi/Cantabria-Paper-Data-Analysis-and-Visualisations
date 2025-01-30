@@ -37,7 +37,7 @@ statistics_pipeline_wrapper <- function(data, response_variable, grouping_factor
                "Natural" = c(adjusted_p_values[["Natural"]], results_table$Natural[2,3:4]), # t_test(t)
                "Temperate" = c(adjusted_p_values[["Temperate"]], results_table$Temperate[2,3:4]), # t_test(t)
                "Mediterranean" = c(adjusted_p_values[["Mediterranean"]], results_table$Mediterranean[2,3:4])) # t_test(t)
-  } else if(mean_table["oneway_results(F_val)"]$p_value >= 0.05){
+  } else if(mean_table[pair == "oneway_results(F_val)"]$p_value >= 0.05){
     
     adjusted_p_values <- matrix(c("-", "-","-"), nrow = 1, ncol = 3, dimnames = list(c("t_test_p_values"), c("Natural", "Temperate", "Mediterranean")))
  
