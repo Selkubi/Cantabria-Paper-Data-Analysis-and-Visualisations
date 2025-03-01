@@ -1,30 +1,44 @@
-## Data processing pipeline for our paper "Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain"
-#### Logo
-### Badges
+# Cantabria Paper Data Analysis and Visualizations
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13354231.svg)](https://doi.org/10.5281/zenodo.13354231)
-### Intorduction 
-- [ ] What this repo does? Why is ti immportant
-- [ ] Links to the published paper
-  
-### Installation
-You can install the package from the repo 
 
-`remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)`
+## Overview
 
-and call it with `library(getting.statistics)`
+This repository contains the data analysis and visualization code accompanying our paper, "Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain." The provided scripts facilitate the replication of analyses and figures presented in the publication.
 
-### How to use it
-Our paper 'XXX' follows through the same pipeline as the wrapper script "analysis/00_analysis_pipeline_paper.R".
+## Installation
 
-The package has two funcitonality; it follows through the analysis indicated in the methods and it creates the pubblished plots of the paper. 
+To utilize the analysis tools, install the package directly from this repository using the following R command:
 
-- [ ] short example
+```r
+remotes::install_github("Selkubi/Cantabria_optical_Final", force = TRUE)
+```
+After installation, load the package with:
 
-### Contributors
-- [ ] Contact info for questions
+```r
+library(getting.statistics)
+```
 
-### How to contribute
+## Usage
+The analysis pipeline employed in our paper is encapsulated in the wrapper script located at analysis/00_analysis_pipeline_paper.R. This script orchestrates the data processing and visualization steps as described in the methods section of the publication.
 
-### How to cite 
+## Example
+To execute the analysis pipeline, run:
 
-### License/copyright
+```r
+source("analysis/00_analysis_pipeline_paper.R")
+```
+This script will reproduce the analyses and generate the plots  and results in the tables featured in the paper.
+
+## Contributors
+For inquiries or further information, please contact: kubilay.selin@gmail.com
+
+## Citation
+
+If you utilize this code or data in your research, please cite our paper:
+
+> Kubilay, S. (2024). Riverine dissolved organic matter responds differently to alteration of two hydrological regimes from Northern Spain. *Journal Name*, *Volume*(Issue), pages. DOI: [10.5281/zenodo.13354231](https://doi.org/10.5281/zenodo.13354231)
+
+## License
+This project is licensed under the MIT License.
+
