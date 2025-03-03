@@ -1,11 +1,12 @@
 
 ##### Figure 5 -  Polygon plots #####
 
-#png("PCA_polygons.pdf", width = 10, height = 12, units = "in", res = 300)  # Adjust resolution as needed
+pdf('output/plots/PCA_polygons.pdf', width = 8, height = 8)
 
-xlim <- c(-7.5, 7.5)
-ylim <- c(-7.5, 7.5)
-par(mfrow = c(2,2), mai = c(0.5, 0.5, 0.3, 0.3))
+
+xlim <- c(-6.5, 6.5)
+ylim <- c(-6.5, 6.5)
+par(mfrow = c(2,2), mai = c(0.7, 0.7, 0.3, 0.3))
 
 plot_TempNat <- plot(wine.pca$x[, c(1:2)], type = "n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) #, main = "Natural Atlantic"
 ordi_TempNat <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, display = "sites", draw = "polygon", label = F, show.groups = group_list[[2]]$site,
@@ -13,8 +14,11 @@ ordi_TempNat <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, dis
 abline(v = 0, h = 0, lty = 2)
 
 plot_TempAlt <- plot(wine.pca$x[, c(1:2)], type="n",  ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) #main = "Altered Atlantic",
-ordi_TempAlt <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, display = "sites", draw = "polygon", label = F, show.groups = group_list[[1]]$site,
-                         alpha = 0.7, col = c('#6996D1'))
+ordi_TempAlt_hydropower <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, display = "sites", draw = "polygon", label = F, 
+                         show.groups = group_list[[1]][alteration_type_grouping == "TempAlt_hydropower"]$site, alpha = 0.7, col = c('#2B5FA2'))
+ordi_TempAlt_irrigation <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, display = "sites", draw = "polygon", label = F, 
+                         show.groups = group_list[[1]][alteration_type_grouping == "TempAlt_irrigation"]$site, alpha = 0.7, col = c('#77a0d4'))
+
 abline(v = 0, h = 0, lty = 2)
 
 plot_MedNat <- plot(wine.pca$x[, c(1:2)], type="n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) # main = "Natural Mediterranean",
@@ -29,6 +33,10 @@ abline(v = 0, h = 0, lty = 2)
 
 par(mfrow = c(1,1))
 
-#dev.off()
+dev.off()
 
+#save ordi_TempAlt as one for the calculations later
+ordi_TempAlt <- ordihull(ord = wine.pca$x[, c(1:2)], groups = data_sum$site, display = "sites", draw = "none", label = F, 
+                         show.groups = group_list[[1]]$site, alpha = 0.7, col = c('#6996D1'))
 ##### 
+
