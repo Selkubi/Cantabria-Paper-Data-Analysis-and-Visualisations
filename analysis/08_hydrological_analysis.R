@@ -41,7 +41,7 @@ labels_plot <- c('TempNat' = "nA",
 hydrographs <- ggplot(means) +
   facet_wrap(~ alteration_type_grouping, scales = "free",
              labeller = as_labeller(labels_plot)) +
-  geom_vline(xintercept = c(2, 4, 6, 8, 10, 12), color = "grey", alpha = 0.35, size = 3.5) +
+  geom_vline(xintercept = c(2, 4, 6, 8, 10, 12), color = "grey", alpha = 0.35, size = 4) +
   geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping,
                  fill = alteration_type_grouping,  
                  colour = alteration_type_grouping)) +
@@ -55,7 +55,7 @@ hydrographs <- ggplot(means) +
                               "10" = "O", "11" = "N", "12" = "D")) +
   scale_shape_manual(values = c(23, 22, 21, 25, 24), labels = labels_plot) +
   labs(x = "Months", y = paste("Normalised mean monthly flow")) +
-  theme_pca() + theme(legend.position = c(0.85, 0.2), legend.title = element_blank())
+  theme_pca() + theme(legend.position = c(0.80, 0.2), legend.title = element_blank())
 
 pdf("output/plots/hydrographs.pdf", width = 6, height = 4)
 plot(hydrographs)
