@@ -67,7 +67,10 @@ meta_sum_optical$campaign <- factor(meta_sum_optical$campaign,
                                        labels =  c("Feb", "Apr", "Jun", "Aug", "Oct", "Dec"))
 
 data_sum <- merge(site_info, data_sum, by.x = c("site"), by.y = c("site"))
-data_sum <- merge(data_sum, meta_sum_optical, by = c("site","campaign"))
+data_sum[, c("campaign_unordered") := as.character(data_sum$campaign)]
+meta_sum_optical[, c("campaign_unordered") := as.character(meta_sum_optical$campaign)]
+
+data_sum <- merge(data_sum, meta_sum_optical[, -"campaign"], by = c("site", "campaign_unordered"))
 data_sum[, "SUVA254" := DecAbsCoeff254/NPOC]
 data_sum[data_sum[, SUVA254 > 6]]$SUVA254 <- NA #This is definitely a weird point. Sama sample as below. Seems like an outlier. Changes the PLSR table of now
 data_sum[data_sum[, SR_Loiselle > 1.7]]$SR_Loiselle <- NA
