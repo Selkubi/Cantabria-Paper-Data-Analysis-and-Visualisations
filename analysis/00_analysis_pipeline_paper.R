@@ -181,7 +181,6 @@ t_test_letters
 #### End of mean and CV calculations ####
 
 ##### 7. PCA data prep #####
-data_sum$campaign <- factor(x = data_sum$campaign, levels = c("oct", "dec", "feb", "apr", "may", "aug"), labels = c("Oct", "Dec", "Feb", "Apr", "May", "Aug"))
 pca_data <- data_sum[, .(alteration, Class, groups.x, alteration_type, alteration_type_grouping,
              HIX2, FIX, beta.alpha, SR_Loiselle,
              E2.to.E3, SUVA254,

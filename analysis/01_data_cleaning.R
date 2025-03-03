@@ -95,3 +95,4 @@ data_sum$alteration_type_grouping <- factor(data_sum$alteration_type_grouping,
                                                        "natural Mediterranean", "altered Mediterranean"))
 
 data_sum$alteration_type  <- factor(data_sum$alteration_type, levels = c("irrigation", "hydropower", "natural"))
+
