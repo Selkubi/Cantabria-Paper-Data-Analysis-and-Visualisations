@@ -31,24 +31,33 @@ means_summary <- means[, .(min = min(value, na.rm = TRUE),
 means_summary$alteration_type_grouping <- factor(means_summary$alteration_type_grouping, levels = c("TempNat", "TempAlt_hydropower", "TempAlt_irrigation", "MedNat", "MedAlt_irrigation"))
 means$alteration_type_grouping <- factor(means$alteration_type_grouping, levels = c("TempNat", "TempAlt_hydropower", "TempAlt_irrigation", "MedNat", "MedAlt_irrigation"))
 means$groups <- factor(means$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
+labels_plot <- c('TempNat' = "nA", 
+            'TempAlt_hydropower' = "aA - Hydropower", 
+            'TempAlt_irrigation' = "aA - Irrigation", 
+            'MedNat' = "nM",
+            'MedAlt_irrigation' = "aM - Irrigation")
+
 
 hydrographs <- ggplot(means) +
   facet_wrap(~ alteration_type_grouping, scales = "free",
-             labeller = as_labeller(c(TempNat = "nA", TempAlt_hydropower = "aA - Hydropower", TempAlt_irrigation = "aA - Irrigation", MedNat = "nM", MedAlt_irrigation = "aM"))) +
-  geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping, fill = alteration_type_grouping), color = "black", size = 2) +
+             labeller = as_labeller(labels_plot)) +
+  geom_vline(xintercept = c(2, 4, 6, 8, 10, 12), color = "grey", alpha = 0.35, size = 4) +
+  geom_point(aes(x = month, y = value / annual_max, group = variable, shape = alteration_type_grouping,
+                 fill = alteration_type_grouping,  
+                 colour = alteration_type_grouping)) +
   geom_line(aes(x = month, y = value / annual_max, group = variable, color = alteration_type_grouping), size = 0.5, alpha = 0.7) +
-  #directlabels::geom_dl(aes(x = month, y = value/annual_max, group = variable, label = variable, color=groups), method = "first.qp") +
   geom_line(data = means_summary, aes(x = month, y = normalized_mean, group = alteration_type_grouping, color = alteration_type_grouping), size = 1.5) +
-  scale_color_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
-  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41")) +
+  scale_color_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41"), labels = labels_plot) +
+  scale_fill_manual(values = c("#B4DCED", "#6996D1", "#2B5FA2", "#F5CB7D", "#F09E41"), labels = labels_plot) +
   scale_x_discrete(labels = c("1" = "J", "2" = "F", "3" = "M",
                               "4" = "A", "5" = "M", "6" = "J",
                               "7" = "J", "8" = "A", "9" = "S",
                               "10" = "O", "11" = "N", "12" = "D")) +
-  scale_shape_manual(values = c(23, 22, 21, 25, 24)) +
-  labs(x = "Months", y = paste("Mean Montly flow (m3/s)")) +
-  theme_pca()
+  scale_shape_manual(values = c(23, 22, 21, 25, 24), labels = labels_plot) +
+  labs(x = "Months", y = paste("Normalised mean monthly flow")) +
+  theme_pca() + theme(legend.position = c(0.80, 0.2), legend.title = element_blank())
 
 pdf("output/plots/hydrographs.pdf", width = 6, height = 4)
 plot(hydrographs)
 dev.off()
+
