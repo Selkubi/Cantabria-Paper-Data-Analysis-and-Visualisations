@@ -205,6 +205,7 @@ for(i in seq_along(group_types)){
 ##### 8. PCA polygon plots #####
 PCAloadings <- data.frame(Variables = rownames(wine.pca$rotation), wine.pca$rotation)
 source("analysis/03_PCA_polygon_plots.R")
+
 dev.off()
 
 ##### 9. PCA PC1 and PC2 centroid calculations #####
