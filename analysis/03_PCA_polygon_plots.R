@@ -3,9 +3,8 @@
 
 pdf('output/plots/PCA_polygons.pdf', width = 8, height = 8)
 
-
-xlim <- c(-6.5, 6.5)
-ylim <- c(-6.5, 6.5)
+xlim <- c(-6.1, 6.1)
+ylim <- c(-6.1, 6.1)
 par(mfrow = c(2,2), mai = c(0.7, 0.7, 0.3, 0.3))
 
 plot_TempNat <- plot(wine.pca$x[, c(1:2)], type = "n", ylim = ylim, xlim = xlim, cex.main = 1.5, cex.axis = 1.25) #, main = "Natural Atlantic"

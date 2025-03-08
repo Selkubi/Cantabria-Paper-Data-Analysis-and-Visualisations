@@ -337,13 +337,13 @@ plot_all
 hull.data$groups <- factor(hull.data$groups, levels = c("TempNat", "TempAlt", "MedNat", "MedAlt"))
 
 plot_points 
-pdf('output/plots/PCA_points.pdf', width = 2.7, height = 2.5)
+pdf('output/plots/PCA_points.pdf', width = 3.8, height = 3.6)
 plot(plot_points)
 dev.off()
 
 plot_optical # we took out just the loading arrows and put the variable names manually using Inkscape 
 PCA_optical 
-pdf('output/plots/PCA_optical.pdf', width = 6.7, height = 6)
+pdf('output/plots/PCA_optical.pdf', width = 4, height = 3.8)
 plot(PCA_optical)
 dev.off()
 #### End of PCA related calculations and plots ####
